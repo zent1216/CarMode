@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- 위치 권한 (GPS 날씨용) -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <!-- 인터넷 (날씨/대기질 API) -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- 다른 앱 실행 가능 여부 조회 (Android 11+ 패키지 가시성) -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+        </intent>
+        <!-- 딥링크 스킴들 -->
+        <intent><data android:scheme="tmap" /></intent>
+        <intent><data android:scheme="kakaomap" /></intent>
+        <intent><data android:scheme="kakaonavi-sdk" /></intent>
+        <intent><data android:scheme="spotify" /></intent>
+        <intent><data android:scheme="vnd.youtube" /></intent>
+        <intent><data android:scheme="comgooglemaps" /></intent>
+        <intent><data android:scheme="nflx" /></intent>
+        <intent><data android:scheme="tel" /></intent>
+        <intent><data android:scheme="sms" /></intent>
+    </queries>
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="false"
+        android:theme="@style/Theme.CarMode">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:screenOrientation="sensorLandscape"
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:stateNotNeeded="true"
+            android:theme="@style/Theme.CarMode">
+
+            <!-- 일반 실행 진입점 -->
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <!-- ★ 홈 런처로 등록되는 핵심 부분 ★
+                 HOME + DEFAULT 카테고리가 있으면 시스템이
+                 이 앱을 "홈 화면 앱" 후보로 인식합니다.
+                 홈 버튼을 누르면 런처 선택 창에 이 앱이 나타납니다. -->
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <service
+            android:name=".NLService"
+            android:label="CarMode 미디어"
+            android:exported="false"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
+
+        <activity
+            android:name=".AllAppsActivity"
+            android:exported="false"
+            android:screenOrientation="sensorLandscape"
+            android:theme="@style/Theme.CarMode" />
+
+        <activity
+            android:name=".SettingsActivity"
+            android:exported="false"
+            android:screenOrientation="sensorLandscape"
+            android:theme="@style/Theme.CarMode" />
+
+    </application>
+</manifest>

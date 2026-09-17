@@ -1,0 +1,20 @@
+# Gradle / build
+.gradle/
+build/
+app/build/
+*/build/
+
+# IDE
+.idea/
+*.iml
+
+# Local config (환경별 경로 — 커밋 금지)
+local.properties
+
+# Keystore / secrets
+*.jks
+*.keystore
+
+# OS
+.DS_Store
+Thumbs.db
