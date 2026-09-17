@@ -29,6 +29,9 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.gridlayout.widget.GridLayout
+import androidx.recyclerview.widget.RecyclerView
+import androidx.viewpager2.widget.ViewPager2
+import android.widget.FrameLayout
 import com.carmode.launcher.databinding.ActivityMainBinding
 import com.google.android.gms.location.LocationServices
 import kotlinx.coroutines.CoroutineScope
@@ -47,6 +50,16 @@ class MainActivity : AppCompatActivity() {
 
     // 날씨 셀의 값 TextView 보관 (코드 생성)
     private val wxValues = HashMap<String, TextView>()
+
+    // 날씨 페이지(현재/주간) 뷰 참조 — ViewPager2 안에 있어 뷰바인딩 대신 직접 보관
+    private lateinit var wxNowPage: View
+    private lateinit var wxWeekPage: View
+    private lateinit var wxIcon: TextView
+    private lateinit var wxTemp: TextView
+    private lateinit var wxLoc: TextView
+    private lateinit var wxDesc: TextView
+    private lateinit var wxGrid: WLinearLayout
+    private lateinit var wxWeek: WLinearLayout
 
     private val ui = CoroutineScope(Dispatchers.Main)
     private val clockHandler = Handler(Looper.getMainLooper())
@@ -67,6 +80,7 @@ class MainActivity : AppCompatActivity() {
         slots = settings.getSlots()
 
         setupTopButtons()
+        setupWeatherPager()
         setupWeatherCellLabels()
         setupMusicControls()
         applyScreenFlags()
@@ -324,6 +338,76 @@ class MainActivity : AppCompatActivity() {
         clockHandler.post(tick)
     }
 
+    // ───────────────────── 날씨 페이지(현재/주간 스와이프) ─────────────────────
+    private fun setupWeatherPager() {
+        val inflater = LayoutInflater.from(this)
+        wxNowPage = inflater.inflate(R.layout.wx_page_now, b.wxPager, false)
+        wxWeekPage = inflater.inflate(R.layout.wx_page_week, b.wxPager, false)
+        wxIcon = wxNowPage.findViewById(R.id.wxIcon)
+        wxTemp = wxNowPage.findViewById(R.id.wxTemp)
+        wxLoc = wxNowPage.findViewById(R.id.wxLoc)
+        wxDesc = wxNowPage.findViewById(R.id.wxDesc)
+        wxGrid = wxNowPage.findViewById(R.id.wxGrid)
+        wxWeek = wxWeekPage.findViewById(R.id.wxWeek)
+
+        val pages = listOf(wxNowPage, wxWeekPage)
+        b.wxPager.offscreenPageLimit = 1
+        b.wxPager.adapter = object : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+            override fun getItemViewType(position: Int) = position
+            override fun getItemCount() = pages.size
+            override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+                val frame = FrameLayout(this@MainActivity).apply {
+                    layoutParams = RecyclerView.LayoutParams(
+                        RecyclerView.LayoutParams.MATCH_PARENT,
+                        RecyclerView.LayoutParams.MATCH_PARENT
+                    )
+                }
+                frame.addView(pages[viewType])
+                return object : RecyclerView.ViewHolder(frame) {}
+            }
+            override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {}
+        }
+
+        // 점 인디케이터
+        updateDots(0)
+        b.wxPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
+            override fun onPageSelected(position: Int) { updateDots(position) }
+        })
+    }
+
+    private fun updateDots(selected: Int) {
+        b.wxDots.removeAllViews()
+        val size = dp(8)
+        for (i in 0 until 2) {
+            val dot = View(this).apply {
+                layoutParams = WLinearLayout.LayoutParams(size, size).apply {
+                    setMargins(dp(4), 0, dp(4), 0)
+                }
+                background = GradientDrawable().apply {
+                    shape = GradientDrawable.OVAL
+                    setColor(ContextCompat.getColor(
+                        this@MainActivity,
+                        if (i == selected) R.color.amber else R.color.line
+                    ))
+                }
+            }
+            b.wxDots.addView(dot)
+        }
+    }
+
+    private fun renderWeekly(days: List<WeatherApi.DayForecast>) {
+        wxWeek.removeAllViews()
+        days.forEach { d ->
+            val row = LayoutInflater.from(this).inflate(R.layout.wx_week_row, wxWeek, false)
+            val (icon, _) = WeatherApi.describe(d.code)
+            row.findViewById<TextView>(R.id.dowLabel).text = d.dow
+            row.findViewById<TextView>(R.id.dowIcon).text = icon
+            row.findViewById<TextView>(R.id.dowRain).text = "💧${d.rainProb}%"
+            row.findViewById<TextView>(R.id.dowTemp).text = "${d.tMax}° / ${d.tMin}°"
+            wxWeek.addView(row)
+        }
+    }
+
     // ───────────────────── 날씨 ─────────────────────
     private fun setupWeatherCellLabels() {
         // 고정 3행: 1행=바람·강수·습도, 2행=체감·최고·최저, 3행=미세·초미세·자외선
@@ -332,7 +416,7 @@ class MainActivity : AppCompatActivity() {
             listOf("feels" to "🌡 체감", "max" to "⬆ 최고", "min" to "⬇ 최저"),
             listOf("pm10" to "😷 미세먼지", "pm25" to "😷 초미세먼지", "uvi" to "☀️ 자외선")
         )
-        val container = b.wxGrid
+        val container = wxGrid
         container.removeAllViews()
         wxValues.clear()
 
@@ -379,7 +463,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun refreshWeatherByGps() {
-        b.wxLoc.text = "위치 확인 중…"
+        wxLoc.text = "위치 확인 중…"
         try {
             val fused = LocationServices.getFusedLocationProviderClient(this)
             fused.lastLocation.addOnSuccessListener { loc ->
@@ -409,14 +493,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun loadWeather(lat: Double, lon: Double, label: String) {
-        b.wxLoc.text = label  // API 성공 여부와 무관하게 먼저 표시
+        wxLoc.text = label  // API 성공 여부와 무관하게 먼저 표시
         ui.launch {
             val w = WeatherApi.fetch(lat, lon)
-            if (w == null) { b.wxDesc.text = "날씨를 불러오지 못했습니다"; return@launch }
+            if (w == null) { wxDesc.text = "날씨를 불러오지 못했습니다"; return@launch }
             val (icon, desc) = WeatherApi.describe(w.code)
-            b.wxIcon.text = icon
-            b.wxTemp.text = "${w.temp}°"
-            b.wxDesc.text = desc
+            wxIcon.text = icon
+            wxTemp.text = "${w.temp}°"
+            wxDesc.text = desc
             setVal("feels", "${w.feels}°")
             setVal("hum", "${w.humidity}%")
             setVal("wind", String.format("%.1f m/s", w.wind))
@@ -429,6 +513,11 @@ class MainActivity : AppCompatActivity() {
             setVal("pm10", pm10txt, pm10col)
             setVal("pm25", pm25txt, pm25col)
             setVal("uvi", uvitxt, uvicol)
+        }
+        // 주간 예보도 병렬로 로드
+        ui.launch {
+            val days = WeatherApi.fetchWeekly(lat, lon)
+            if (days.isNotEmpty()) renderWeekly(days)
         }
     }
 

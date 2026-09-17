@@ -26,6 +26,46 @@ object WeatherApi {
 
     data class City(val name: String, val region: String, val lat: Double, val lon: Double)
 
+    /** 주간 예보 하루치 */
+    data class DayForecast(
+        val dow: String,      // 요일 (월/화/…), 오늘은 "오늘"
+        val code: Int,
+        val tMax: Int, val tMin: Int,
+        val rainProb: Int
+    )
+
+    /** 7일 주간 예보 조회 */
+    suspend fun fetchWeekly(lat: Double, lon: Double): List<DayForecast> = withContext(Dispatchers.IO) {
+        try {
+            val url = "https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$lon" +
+                "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max" +
+                "&timezone=auto&forecast_days=7"
+            val daily = JSONObject(get(url)).getJSONObject("daily")
+            val times = daily.getJSONArray("time")
+            val codes = daily.getJSONArray("weather_code")
+            val maxs = daily.getJSONArray("temperature_2m_max")
+            val mins = daily.getJSONArray("temperature_2m_min")
+            val rains = daily.getJSONArray("precipitation_probability_max")
+            val dowNames = arrayOf("일", "월", "화", "수", "목", "금", "토")
+            val cal = java.util.Calendar.getInstance()
+            (0 until times.length()).map { i ->
+                val dateStr = times.getString(i)  // yyyy-MM-dd
+                val parts = dateStr.split("-")
+                val dowLabel = if (i == 0) "오늘" else {
+                    cal.set(parts[0].toInt(), parts[1].toInt() - 1, parts[2].toInt())
+                    dowNames[cal.get(java.util.Calendar.DAY_OF_WEEK) - 1]
+                }
+                DayForecast(
+                    dow = dowLabel,
+                    code = codes.getInt(i),
+                    tMax = maxs.getDouble(i).toInt(),
+                    tMin = mins.getDouble(i).toInt(),
+                    rainProb = if (rains.isNull(i)) 0 else rains.getInt(i)
+                )
+            }
+        } catch (e: Exception) { emptyList() }
+    }
+
     /** 날씨 + 대기질을 함께 조회 */
     suspend fun fetch(lat: Double, lon: Double): Weather? = withContext(Dispatchers.IO) {
         try {

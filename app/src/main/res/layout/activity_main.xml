@@ -91,64 +91,21 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
 
-                <!-- 날씨 헤더 -->
-                <LinearLayout
+                <!-- 날씨: 좌우 스와이프 (현재 / 주간) -->
+                <androidx.viewpager2.widget.ViewPager2
+                    android:id="@+id/wxPager"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical">
+                    android:layout_height="250dp"
+                    android:layout_marginTop="4dp" />
 
-                    <TextView
-                        android:id="@+id/wxIcon"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="⛅"
-                        android:textSize="44sp" />
-
-                    <TextView
-                        android:id="@+id/wxTemp"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="14dp"
-                        android:text="--°"
-                        android:textColor="@color/text"
-                        android:textSize="40sp"
-                        android:textStyle="bold" />
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:layout_marginStart="14dp"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:id="@+id/wxLoc"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="현재 위치"
-                            android:textColor="@color/text"
-                            android:textSize="16sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:id="@+id/wxDesc"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="날씨 정보"
-                            android:textColor="@color/text_dim"
-                            android:textSize="14sp" />
-                    </LinearLayout>
-                </LinearLayout>
-
-                <!-- 날씨 상세 (LinearLayout, 코드에서 행 채움) -->
+                <!-- 페이지 점 인디케이터 -->
                 <LinearLayout
-                    android:id="@+id/wxGrid"
-                    android:layout_width="match_parent"
+                    android:id="@+id/wxDots"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="14dp"
-                    android:orientation="vertical" />
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="8dp"
+                    android:orientation="horizontal" />
 
                 <!-- 음악 위젯 -->
                 <View
