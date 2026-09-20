@@ -534,12 +534,14 @@ class MainActivity : AppCompatActivity() {
 
     // ───────────────────── 날씨 ─────────────────────
     private fun setupWeatherCellLabels() {
-        // 고정 3행: 1행=바람·강수·습도, 2행=체감·최고·최저, 3행=미세·초미세·자외선
-        val rows = listOf(
-            listOf("wind" to "🌬 바람", "rain" to "☔ 강수확률", "hum" to "💧 습도"),
-            listOf("feels" to "🌡 체감", "max" to "⬆ 최고", "min" to "⬇ 최저"),
-            listOf("pm10" to "😷 미세먼지", "pm25" to "😷 초미세먼지", "uvi" to "☀️ 자외선")
+        // 전체 항목 순서/라벨 (설정에서 선택한 것만 표시, 3개씩 한 행)
+        val allItems = listOf(
+            "wind" to "🌬 바람", "rain" to "☔ 강수확률", "hum" to "💧 습도",
+            "feels" to "🌡 체감", "max" to "⬆ 최고", "min" to "⬇ 최저",
+            "pm10" to "😷 미세먼지", "pm25" to "😷 초미세먼지", "uvi" to "☀️ 자외선"
         )
+        val visible = allItems.filter { (key, _) -> key in settings.wxItems }
+        val rows = visible.chunked(3)
         val container = wxGrid
         container.removeAllViews()
         wxValues.clear()
