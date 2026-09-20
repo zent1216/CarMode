@@ -492,7 +492,10 @@ class MainActivity : AppCompatActivity() {
         // 점 인디케이터
         updateDots(0)
         b.wxPager.addOnPageChangeListener(object : ViewPager.SimpleOnPageChangeListener() {
-            override fun onPageSelected(position: Int) { updateDots(position) }
+            override fun onPageSelected(position: Int) {
+                updateDots(position)
+                b.wxPager.requestLayout()  // 현재 페이지 높이에 맞춰 재측정
+            }
         })
     }
 

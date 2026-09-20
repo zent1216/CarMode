@@ -92,10 +92,10 @@
                 android:orientation="vertical">
 
                 <!-- 날씨: 좌우 스와이프 (현재 / 주간) -->
-                <androidx.viewpager.widget.ViewPager
+                <com.carmode.launcher.WrapHeightViewPager
                     android:id="@+id/wxPager"
                     android:layout_width="match_parent"
-                    android:layout_height="250dp"
+                    android:layout_height="wrap_content"
                     android:layout_marginTop="4dp" />
 
                 <!-- 페이지 점 인디케이터 -->
@@ -111,13 +111,13 @@
                 <View
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
-                    android:layout_marginTop="18dp"
+                    android:layout_marginTop="10dp"
                     android:background="@color/line" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
+                    android:layout_marginTop="10dp"
                     android:orientation="horizontal"
                     android:gravity="center_vertical">
 
@@ -166,7 +166,7 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
+                    android:layout_marginTop="8dp"
                     android:orientation="horizontal"
                     android:gravity="center">
 
