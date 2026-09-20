@@ -141,7 +141,8 @@ class MainActivity : AppCompatActivity() {
     // ───────────────────── 상태 토글 (와이파이/블루투스/데이터) ─────────────────────
     private fun setupStatusToggles() {
         b.btnWifi.setOnClickListener { toggleWifi() }
-        b.btnBt.setOnClickListener { toggleBt() }
+        // 블루투스는 기기 연결이 목적이라 블루투스 페이지로 이동
+        b.btnBt.setOnClickListener { openBluetoothPage() }
         b.btnData.setOnClickListener { toggleData() }
         refreshStatusIcons()
     }
@@ -179,6 +180,12 @@ class MainActivity : AppCompatActivity() {
         p.waitFor() == 0
     } catch (e: Exception) { false }
 
+    private fun openBluetoothPage() {
+        // 이 ROM은 블루투스 전용 페이지가 비공개라, 표준 블루투스/연결된 기기 설정으로 이동
+        try { startActivity(Intent(AndroidSettings.ACTION_BLUETOOTH_SETTINGS)) }
+        catch (_: Exception) {}
+    }
+
     private fun openPanel(primary: String, fallback: String) {
         try { startActivity(Intent(primary)) }
         catch (_: Exception) { try { startActivity(Intent(fallback)) } catch (_: Exception) {} }
@@ -195,21 +202,6 @@ class MainActivity : AppCompatActivity() {
                 openPanel(AndroidSettings.Panel.ACTION_WIFI, AndroidSettings.ACTION_WIFI_SETTINGS)
             } else {
                 kotlinx.coroutines.delay(700); refreshStatusIcons()
-            }
-        }
-    }
-
-    private fun toggleBt() {
-        val target = !isBtOn()
-        ui.launch {
-            val ok = kotlinx.coroutines.withContext(Dispatchers.IO) {
-                runRoot("svc bluetooth ${if (target) "enable" else "disable"}")
-            }
-            if (!ok) {
-                Toast.makeText(this@MainActivity, "루트 없음 · 설정에서 변경", Toast.LENGTH_SHORT).show()
-                openPanel(AndroidSettings.ACTION_BLUETOOTH_SETTINGS, AndroidSettings.ACTION_BLUETOOTH_SETTINGS)
-            } else {
-                kotlinx.coroutines.delay(1200); refreshStatusIcons()
             }
         }
     }
