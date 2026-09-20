@@ -12,7 +12,7 @@ class Settings(context: Context) {
         val raw = prefs.getString("slots", DEFAULT_SLOTS) ?: DEFAULT_SLOTS
         return raw.split(",").toMutableList().also {
             while (it.size < SLOT_COUNT) it.add("")
-        }
+        }.take(SLOT_COUNT).toMutableList()
     }
 
     fun saveSlots(slots: List<String>) {
@@ -62,8 +62,8 @@ class Settings(context: Context) {
 
     companion object {
         const val SLOT_COUNT = 6
-        // 기본 타일: 티맵, 멜론, 카카오맵, 유튜브, 전화, 빈칸
-        const val DEFAULT_SLOTS = ",,,,,,"
+        // 기본 타일: 6칸 모두 빈칸 (쉼표 5개 = 빈 문자열 6개)
+        const val DEFAULT_SLOTS = ",,,,,"
         val ALL_WX_ITEMS = listOf("feels","hum","wind","rain","max","min","pm10","pm25","uvi")
         val WX_ITEM_LABELS = mapOf(
             "feels" to "체감온도", "hum" to "습도", "wind" to "바람",
