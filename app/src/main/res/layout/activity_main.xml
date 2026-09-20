@@ -47,6 +47,37 @@
             android:orientation="horizontal"
             android:gravity="center_vertical">
 
+            <!-- 상태 토글: 와이파이 / 블루투스 / 데이터 -->
+            <ImageView
+                android:id="@+id/btnWifi"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:padding="9dp"
+                android:src="@drawable/ic_wifi"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="와이파이" />
+
+            <ImageView
+                android:id="@+id/btnBt"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:layout_marginStart="4dp"
+                android:padding="9dp"
+                android:src="@drawable/ic_bluetooth"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="블루투스" />
+
+            <ImageView
+                android:id="@+id/btnData"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:layout_marginStart="4dp"
+                android:layout_marginEnd="10dp"
+                android:padding="9dp"
+                android:src="@drawable/ic_cellular"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="모바일 데이터" />
+
             <TextView
                 android:id="@+id/btnAllApps"
                 style="@style/TopButton"

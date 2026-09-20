@@ -12,6 +12,8 @@ import android.media.session.MediaController
 import android.media.session.MediaSessionManager
 import android.media.session.PlaybackState
 import android.net.Uri
+import android.net.wifi.WifiManager
+import android.telephony.TelephonyManager
 import android.provider.Settings as AndroidSettings
 import android.view.WindowManager
 import android.widget.ImageView
@@ -79,6 +81,7 @@ class MainActivity : AppCompatActivity() {
         slots = settings.getSlots()
 
         setupTopButtons()
+        setupStatusToggles()
         setupWeatherPager()
         setupWeatherCellLabels()
         setupMusicControls()
@@ -130,8 +133,100 @@ class MainActivity : AppCompatActivity() {
         applyWidgetSide()
         setupWeatherCellLabels()
         refreshWeather()
+        refreshStatusIcons()
         // 권한 설정 화면 다녀온 뒤 체크리스트 갱신
         permRoot?.let { refreshPermRows(it) }
+    }
+
+    // ───────────────────── 상태 토글 (와이파이/블루투스/데이터) ─────────────────────
+    private fun setupStatusToggles() {
+        b.btnWifi.setOnClickListener { toggleWifi() }
+        b.btnBt.setOnClickListener { toggleBt() }
+        b.btnData.setOnClickListener { toggleData() }
+        refreshStatusIcons()
+    }
+
+    private fun refreshStatusIcons() {
+        tintIcon(b.btnWifi, isWifiOn())
+        tintIcon(b.btnBt, isBtOn())
+        tintIcon(b.btnData, isDataOn())
+    }
+
+    private fun tintIcon(v: ImageView, on: Boolean) {
+        v.setColorFilter(ContextCompat.getColor(this, if (on) R.color.amber else R.color.text_dim))
+    }
+
+    private fun isWifiOn(): Boolean = try {
+        (applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager).isWifiEnabled
+    } catch (e: Exception) { false }
+
+    private fun isBtOn(): Boolean = try {
+        val bm = getSystemService(Context.BLUETOOTH_SERVICE) as android.bluetooth.BluetoothManager
+        bm.adapter?.isEnabled == true
+    } catch (e: Exception) { false }
+
+    private fun isDataOn(): Boolean = try {
+        (getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager).isDataEnabled
+    } catch (e: Exception) { false }
+
+    /** su 로 명령 실행. 루트 없거나 실패하면 false */
+    private fun runRoot(vararg cmds: String): Boolean = try {
+        val p = Runtime.getRuntime().exec("su")
+        java.io.DataOutputStream(p.outputStream).use { os ->
+            cmds.forEach { os.writeBytes(it + "\n") }
+            os.writeBytes("exit\n"); os.flush()
+        }
+        p.waitFor() == 0
+    } catch (e: Exception) { false }
+
+    private fun openPanel(primary: String, fallback: String) {
+        try { startActivity(Intent(primary)) }
+        catch (_: Exception) { try { startActivity(Intent(fallback)) } catch (_: Exception) {} }
+    }
+
+    private fun toggleWifi() {
+        val target = !isWifiOn()
+        ui.launch {
+            val ok = kotlinx.coroutines.withContext(Dispatchers.IO) {
+                runRoot("svc wifi ${if (target) "enable" else "disable"}")
+            }
+            if (!ok) {
+                Toast.makeText(this@MainActivity, "루트 없음 · 설정에서 변경", Toast.LENGTH_SHORT).show()
+                openPanel(AndroidSettings.Panel.ACTION_WIFI, AndroidSettings.ACTION_WIFI_SETTINGS)
+            } else {
+                kotlinx.coroutines.delay(700); refreshStatusIcons()
+            }
+        }
+    }
+
+    private fun toggleBt() {
+        val target = !isBtOn()
+        ui.launch {
+            val ok = kotlinx.coroutines.withContext(Dispatchers.IO) {
+                runRoot("svc bluetooth ${if (target) "enable" else "disable"}")
+            }
+            if (!ok) {
+                Toast.makeText(this@MainActivity, "루트 없음 · 설정에서 변경", Toast.LENGTH_SHORT).show()
+                openPanel(AndroidSettings.ACTION_BLUETOOTH_SETTINGS, AndroidSettings.ACTION_BLUETOOTH_SETTINGS)
+            } else {
+                kotlinx.coroutines.delay(1200); refreshStatusIcons()
+            }
+        }
+    }
+
+    private fun toggleData() {
+        val target = !isDataOn()
+        ui.launch {
+            val ok = kotlinx.coroutines.withContext(Dispatchers.IO) {
+                runRoot("svc data ${if (target) "enable" else "disable"}")
+            }
+            if (!ok) {
+                Toast.makeText(this@MainActivity, "루트 없음 · 설정에서 변경", Toast.LENGTH_SHORT).show()
+                openPanel(AndroidSettings.ACTION_NETWORK_OPERATOR_SETTINGS, AndroidSettings.ACTION_SETTINGS)
+            } else {
+                kotlinx.coroutines.delay(700); refreshStatusIcons()
+            }
+        }
     }
 
     // ───────────────────── 첫 실행 권한 안내 ─────────────────────
