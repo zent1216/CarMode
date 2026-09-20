@@ -43,7 +43,90 @@ class SettingsActivity : AppCompatActivity() {
         setupWeatherItems()
         setupWeatherLoc()
         setupMusic()
+        setupUpdate()
     }
+
+    // ── 업데이트 확인 ──
+    private fun currentVersion(): String = try {
+        packageManager.getPackageInfo(packageName, 0).versionName ?: "?"
+    } catch (e: Exception) { "?" }
+
+    private fun setupUpdate() {
+        b.tvUpdateSub.text = "현재 버전 ${currentVersion()}"
+        b.btnUpdate.setOnClickListener { checkUpdate(manual = true) }
+        b.rowUpdate.setOnClickListener { checkUpdate(manual = true) }
+    }
+
+    private fun checkUpdate(manual: Boolean) {
+        b.tvUpdateSub.text = "확인 중…"
+        ui.launch {
+            val latest = Updater.fetchLatest()
+            if (latest == null) {
+                b.tvUpdateSub.text = "현재 버전 ${currentVersion()}"
+                if (manual) toast("업데이트 정보를 가져오지 못했습니다")
+                return@launch
+            }
+            val cur = currentVersion()
+            if (Updater.isNewer(cur, latest.version)) {
+                b.tvUpdateSub.text = "새 버전 v${latest.version} 있음"
+                showUpdateDialog(latest)
+            } else {
+                b.tvUpdateSub.text = "최신 버전 (v$cur)"
+                if (manual) toast("최신 버전입니다")
+            }
+        }
+    }
+
+    private fun showUpdateDialog(r: Updater.Release) {
+        val msg = if (r.notes.isBlank()) "새 버전 v${r.version} 을(를) 설치할까요?"
+                  else "새 버전 v${r.version}\n\n${r.notes.take(500)}"
+        AlertDialog.Builder(this, R.style.Theme_CarMode_Dialog)
+            .setTitle("업데이트")
+            .setMessage(msg)
+            .setPositiveButton("다운로드·설치") { _, _ -> downloadAndInstall(r) }
+            .setNegativeButton("나중에", null)
+            .show()
+    }
+
+    private fun downloadAndInstall(r: Updater.Release) {
+        b.tvUpdateSub.text = "다운로드 중…"
+        toast("다운로드를 시작합니다")
+        ui.launch {
+            val apk = Updater.downloadApk(cacheDir, r.apkUrl)
+            if (apk == null) {
+                b.tvUpdateSub.text = "새 버전 v${r.version} 있음"
+                toast("다운로드 실패")
+                return@launch
+            }
+            // Android 8+ : 알 수 없는 앱 설치 허용 확인
+            if (!packageManager.canRequestPackageInstalls()) {
+                toast("설치 권한을 허용해주세요")
+                try {
+                    startActivity(Intent(AndroidSettings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                        android.net.Uri.parse("package:$packageName")))
+                } catch (_: Exception) {}
+                return@launch
+            }
+            installApk(apk)
+        }
+    }
+
+    private fun installApk(apk: java.io.File) {
+        try {
+            val uri = androidx.core.content.FileProvider.getUriForFile(
+                this, "$packageName.fileprovider", apk)
+            val i = Intent(Intent.ACTION_VIEW).apply {
+                setDataAndType(uri, "application/vnd.android.package-archive")
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            startActivity(i)
+        } catch (e: Exception) {
+            toast("설치를 시작할 수 없습니다")
+        }
+    }
+
+    private fun toast(m: String) =
+        android.widget.Toast.makeText(this, m, android.widget.Toast.LENGTH_SHORT).show()
 
     // ── 홈 앱 설정 ──
     private fun setupHomeApp() {

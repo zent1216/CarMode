@@ -94,6 +94,25 @@ class MainActivity : AppCompatActivity() {
 
         // 첫 실행 시 필요한 권한 안내
         maybeShowFirstRunPermissions()
+
+        // 새 버전 확인 (있으면 안내)
+        checkUpdateOnLaunch()
+    }
+
+    private fun checkUpdateOnLaunch() {
+        ui.launch {
+            val latest = Updater.fetchLatest() ?: return@launch
+            val cur = try {
+                packageManager.getPackageInfo(packageName, 0).versionName ?: ""
+            } catch (e: Exception) { "" }
+            if (Updater.isNewer(cur, latest.version)) {
+                Toast.makeText(
+                    this@MainActivity,
+                    "새 버전 v${latest.version} 있음 · 설정 > 업데이트 확인",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
     }
 
     // ───────────────────── 상단 버튼 ─────────────────────
