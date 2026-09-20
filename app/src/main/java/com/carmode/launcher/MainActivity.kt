@@ -29,9 +29,8 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.gridlayout.widget.GridLayout
-import androidx.recyclerview.widget.RecyclerView
-import androidx.viewpager2.widget.ViewPager2
-import android.widget.FrameLayout
+import androidx.viewpager.widget.ViewPager
+import androidx.viewpager.widget.PagerAdapter
 import com.carmode.launcher.databinding.ActivityMainBinding
 import com.google.android.gms.location.LocationServices
 import kotlinx.coroutines.CoroutineScope
@@ -51,7 +50,7 @@ class MainActivity : AppCompatActivity() {
     // 날씨 셀의 값 TextView 보관 (코드 생성)
     private val wxValues = HashMap<String, TextView>()
 
-    // 날씨 페이지(현재/주간) 뷰 참조 — ViewPager2 안에 있어 뷰바인딩 대신 직접 보관
+    // 날씨 페이지(현재/주간) 뷰 참조 — ViewPager 안에 있어 뷰바인딩 대신 직접 보관
     private lateinit var wxNowPage: View
     private lateinit var wxWeekPage: View
     private lateinit var wxIcon: TextView
@@ -351,26 +350,22 @@ class MainActivity : AppCompatActivity() {
         wxWeek = wxWeekPage.findViewById(R.id.wxWeek)
 
         val pages = listOf(wxNowPage, wxWeekPage)
-        b.wxPager.offscreenPageLimit = 1
-        b.wxPager.adapter = object : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
-            override fun getItemViewType(position: Int) = position
-            override fun getItemCount() = pages.size
-            override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
-                val frame = FrameLayout(this@MainActivity).apply {
-                    layoutParams = RecyclerView.LayoutParams(
-                        RecyclerView.LayoutParams.MATCH_PARENT,
-                        RecyclerView.LayoutParams.MATCH_PARENT
-                    )
-                }
-                frame.addView(pages[viewType])
-                return object : RecyclerView.ViewHolder(frame) {}
+        b.wxPager.adapter = object : PagerAdapter() {
+            override fun getCount() = pages.size
+            override fun isViewFromObject(view: View, obj: Any) = view === obj
+            override fun instantiateItem(container: ViewGroup, position: Int): Any {
+                val v = pages[position]
+                if (v.parent == null) container.addView(v)
+                return v
             }
-            override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {}
+            // 페이지는 항상 유지 (제거하지 않아 참조 안정)
+            override fun destroyItem(container: ViewGroup, position: Int, obj: Any) {}
         }
+        b.wxPager.offscreenPageLimit = 1
 
         // 점 인디케이터
         updateDots(0)
-        b.wxPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
+        b.wxPager.addOnPageChangeListener(object : ViewPager.SimpleOnPageChangeListener() {
             override fun onPageSelected(position: Int) { updateDots(position) }
         })
     }

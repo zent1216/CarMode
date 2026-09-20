@@ -11,8 +11,8 @@ android {
         applicationId "com.carmode.launcher"
         minSdk 29              // Android 10+ (S20는 Android 13이므로 충분)
         targetSdk 34
-        versionCode 3
-        versionName "1.2"
+        versionCode 4
+        versionName "1.3"
     }
 
     signingConfigs {
@@ -49,7 +49,7 @@ dependencies {
     implementation 'com.google.android.material:material:1.12.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation 'androidx.gridlayout:gridlayout:1.0.0'
-    implementation 'androidx.viewpager2:viewpager2:1.1.0'
+    implementation 'androidx.viewpager:viewpager:1.0.0'
 
     // 네트워크 (날씨/대기질 API)
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'

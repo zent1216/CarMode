@@ -92,7 +92,7 @@
                 android:orientation="vertical">
 
                 <!-- 날씨: 좌우 스와이프 (현재 / 주간) -->
-                <androidx.viewpager2.widget.ViewPager2
+                <androidx.viewpager.widget.ViewPager
                     android:id="@+id/wxPager"
                     android:layout_width="match_parent"
                     android:layout_height="250dp"
