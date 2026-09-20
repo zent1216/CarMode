@@ -53,6 +53,16 @@
                 android:textColor="@color/text_dim"
                 android:textSize="14sp" />
         </LinearLayout>
+
+        <ImageButton
+            android:id="@+id/wxRefresh"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginStart="8dp"
+            android:src="@drawable/ic_refresh"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:scaleType="centerInside"
+            android:contentDescription="날씨 새로고침" />
     </LinearLayout>
 
     <!-- 날씨 상세 (코드에서 행 채움) -->

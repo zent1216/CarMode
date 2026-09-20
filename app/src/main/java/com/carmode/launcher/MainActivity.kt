@@ -349,6 +349,13 @@ class MainActivity : AppCompatActivity() {
         wxGrid = wxNowPage.findViewById(R.id.wxGrid)
         wxWeek = wxWeekPage.findViewById(R.id.wxWeek)
 
+        // 날씨 새로고침 버튼
+        wxNowPage.findViewById<View>(R.id.wxRefresh).setOnClickListener { v ->
+            v.animate().rotationBy(360f).setDuration(500).start()
+            Toast.makeText(this, "날씨 새로고침", Toast.LENGTH_SHORT).show()
+            refreshWeather()
+        }
+
         val pages = listOf(wxNowPage, wxWeekPage)
         b.wxPager.adapter = object : PagerAdapter() {
             override fun getCount() = pages.size
