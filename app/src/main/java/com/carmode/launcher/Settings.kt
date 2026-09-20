@@ -19,6 +19,11 @@ class Settings(context: Context) {
         prefs.edit().putString("slots", slots.joinToString(",")).apply()
     }
 
+    // ── 첫 실행 여부 (권한 안내 표시용) ──
+    var firstRunDone: Boolean
+        get() = prefs.getBoolean("firstRunDone", false)
+        set(v) = prefs.edit().putBoolean("firstRunDone", v).apply()
+
     // ── 위젯 패널 위치 (left / right) ──
     var widgetSide: String
         get() = prefs.getString("side", "left") ?: "left"

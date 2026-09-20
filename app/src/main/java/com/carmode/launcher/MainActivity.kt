@@ -88,6 +88,9 @@ class MainActivity : AppCompatActivity() {
         startClock()
         startMediaPoll()
         refreshWeather()
+
+        // 첫 실행 시 필요한 권한 안내
+        maybeShowFirstRunPermissions()
     }
 
     // ───────────────────── 상단 버튼 ─────────────────────
@@ -127,6 +130,122 @@ class MainActivity : AppCompatActivity() {
         applyWidgetSide()
         setupWeatherCellLabels()
         refreshWeather()
+        // 권한 설정 화면 다녀온 뒤 체크리스트 갱신
+        permRoot?.let { refreshPermRows(it) }
+    }
+
+    // ───────────────────── 첫 실행 권한 안내 ─────────────────────
+    private var permRoot: WLinearLayout? = null
+
+    private fun hasLocationPerm() =
+        ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) ==
+            PackageManager.PERMISSION_GRANTED
+
+    private fun hasNlsAccess(): Boolean {
+        val flat = AndroidSettings.Secure.getString(
+            contentResolver, "enabled_notification_listeners"
+        ) ?: return false
+        return flat.split(":").any { it.contains(packageName) }
+    }
+
+    private fun isDefaultHome(): Boolean {
+        val intent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
+        val res = packageManager.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY)
+        return res?.activityInfo?.packageName == packageName
+    }
+
+    private fun maybeShowFirstRunPermissions() {
+        if (settings.firstRunDone) return
+        showPermissionDialog()
+    }
+
+    private fun showPermissionDialog() {
+        val root = WLinearLayout(this).apply {
+            orientation = WLinearLayout.VERTICAL
+            setPadding(dp(20), dp(12), dp(20), dp(4))
+            setBackgroundColor(ContextCompat.getColor(this@MainActivity, R.color.bg))
+        }
+        permRoot = root
+        refreshPermRows(root)
+
+        val dialog = AlertDialog.Builder(this, R.style.Theme_CarMode_Dialog)
+            .setTitle("필요한 권한 설정")
+            .setView(root)
+            .setPositiveButton("완료", null)
+            .setOnDismissListener {
+                permRoot = null
+                settings.firstRunDone = true
+            }
+            .create()
+        dialog.show()
+        val screenW = resources.displayMetrics.widthPixels
+        dialog.window?.setLayout((screenW * 0.55).toInt(), WindowManager.LayoutParams.WRAP_CONTENT)
+    }
+
+    private fun refreshPermRows(container: WLinearLayout) {
+        container.removeAllViews()
+        // 안내 문구
+        container.addView(TextView(this).apply {
+            text = "CarMode를 제대로 쓰려면 아래 권한이 필요합니다."
+            setTextColor(ContextCompat.getColor(this@MainActivity, R.color.text_dim))
+            textSize = 13f
+            setPadding(0, 0, 0, dp(6))
+        })
+        addPermRow(
+            container, "위치", "GPS로 현재 위치 날씨 표시", hasLocationPerm()
+        ) { locationPermission.launch(Manifest.permission.ACCESS_FINE_LOCATION) }
+        addPermRow(
+            container, "알림 접근", "재생 중인 음악 정보 표시", hasNlsAccess()
+        ) {
+            try { startActivity(Intent(AndroidSettings.ACTION_NOTIFICATION_LISTENER_SETTINGS)) }
+            catch (_: Exception) {}
+        }
+        addPermRow(
+            container, "홈 앱 지정", "홈 버튼 시 CarMode 실행", isDefaultHome()
+        ) {
+            try { startActivity(Intent(AndroidSettings.ACTION_HOME_SETTINGS)) }
+            catch (_: Exception) {
+                try { startActivity(Intent(AndroidSettings.ACTION_SETTINGS)) } catch (_: Exception) {}
+            }
+        }
+    }
+
+    private fun addPermRow(
+        container: WLinearLayout, label: String, desc: String,
+        granted: Boolean, onGrant: () -> Unit
+    ) {
+        val row = WLinearLayout(this).apply {
+            orientation = WLinearLayout.HORIZONTAL
+            gravity = android.view.Gravity.CENTER_VERTICAL
+            setPadding(0, dp(10), 0, dp(10))
+        }
+        val textCol = WLinearLayout(this).apply {
+            orientation = WLinearLayout.VERTICAL
+            layoutParams = WLinearLayout.LayoutParams(0, WLinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+        }
+        textCol.addView(TextView(this).apply {
+            text = (if (granted) "✓ " else "• ") + label
+            setTextColor(ContextCompat.getColor(
+                this@MainActivity, if (granted) R.color.amber else R.color.text))
+            textSize = 16f
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+        })
+        textCol.addView(TextView(this).apply {
+            text = desc
+            setTextColor(ContextCompat.getColor(this@MainActivity, R.color.text_dim))
+            textSize = 12f
+        })
+        val btn = TextView(android.view.ContextThemeWrapper(this, R.style.TopButton)).apply {
+            text = if (granted) "완료됨" else "허용"
+            if (granted) {
+                alpha = 0.5f
+            } else {
+                setOnClickListener { onGrant() }
+            }
+        }
+        row.addView(textCol)
+        row.addView(btn)
+        container.addView(row)
     }
 
     /** 위젯 패널을 좌/우로 재배치 (자식 뷰 순서 교체) */
