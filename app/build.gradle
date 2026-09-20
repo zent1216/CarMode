@@ -11,8 +11,8 @@ android {
         applicationId "com.carmode.launcher"
         minSdk 29              // Android 10+ (S20는 Android 13이므로 충분)
         targetSdk 34
-        versionCode 9
-        versionName "1.8"
+        versionCode 10
+        versionName "1.9"
     }
 
     signingConfigs {

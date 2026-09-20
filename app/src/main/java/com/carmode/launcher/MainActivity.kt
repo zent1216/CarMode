@@ -545,6 +545,7 @@ class MainActivity : AppCompatActivity() {
                 val days = arrayOf("일","월","화","수","목","금","토")
                 val d = c.get(Calendar.DAY_OF_WEEK) - 1
                 b.tvTopDate.text = "${c.get(Calendar.MONTH)+1}월 ${c.get(Calendar.DAY_OF_MONTH)}일 (${days[d]})"
+                refreshStatusIcons()  // 와이파이/블루투스/데이터 상태 실시간 반영
                 clockHandler.postDelayed(this, 1000)
             }
         }
