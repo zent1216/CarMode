@@ -153,6 +153,7 @@ class MainActivity : AppCompatActivity() {
         setupWeatherCellLabels()
         refreshWeather()
         refreshStatusIcons()
+        renderTiles()  // 설정에서 타일 개수 변경 시 반영
         // 권한 설정 화면 다녀온 뒤 체크리스트 갱신
         permRoot?.let { refreshPermRows(it) }
     }
@@ -385,7 +386,11 @@ class MainActivity : AppCompatActivity() {
     private fun renderTiles() {
         val grid = b.tileGrid
         grid.removeAllViews()
-        val cols = 3; val rows = 2
+        val cols = settings.tileCols; val rows = settings.tileRows
+        // ★ 자식 추가 전에 행/열 수를 먼저 지정 (초과 시 GridLayout 예외 방지)
+        grid.columnCount = cols
+        grid.rowCount = rows
+        slots = settings.getSlots()  // 그리드 크기에 맞춰 항상 재로딩
         slots.forEachIndexed { i, key ->
             val entry = AppCatalog.byKey(key)
                 ?: if (key.contains('.')) entryFromPackage(key) else null
@@ -399,8 +404,6 @@ class MainActivity : AppCompatActivity() {
             }
             grid.addView(view, lp)
         }
-        grid.columnCount = cols
-        grid.rowCount = rows
     }
 
     private fun buildTile(entry: AppEntry, index: Int): View {

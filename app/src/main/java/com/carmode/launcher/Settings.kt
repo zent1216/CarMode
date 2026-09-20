@@ -7,12 +7,24 @@ class Settings(context: Context) {
 
     private val prefs = context.getSharedPreferences("carmode", Context.MODE_PRIVATE)
 
-    // ── 타일 구성 (6칸, 빈 칸은 빈 문자열) ──
+    // ── 타일 그리드 크기 (가로 1~6, 세로 1~4) ──
+    var tileCols: Int
+        get() = prefs.getInt("tileCols", 3).coerceIn(1, MAX_COLS)
+        set(v) = prefs.edit().putInt("tileCols", v.coerceIn(1, MAX_COLS)).apply()
+
+    var tileRows: Int
+        get() = prefs.getInt("tileRows", 2).coerceIn(1, MAX_ROWS)
+        set(v) = prefs.edit().putInt("tileRows", v.coerceIn(1, MAX_ROWS)).apply()
+
+    val slotCount: Int get() = tileCols * tileRows
+
+    // ── 타일 구성 (칸 수 = 가로×세로, 빈 칸은 빈 문자열) ──
     fun getSlots(): MutableList<String> {
-        val raw = prefs.getString("slots", DEFAULT_SLOTS) ?: DEFAULT_SLOTS
+        val n = slotCount
+        val raw = prefs.getString("slots", "") ?: ""
         return raw.split(",").toMutableList().also {
-            while (it.size < SLOT_COUNT) it.add("")
-        }.take(SLOT_COUNT).toMutableList()
+            while (it.size < n) it.add("")
+        }.take(n).toMutableList()
     }
 
     fun saveSlots(slots: List<String>) {
@@ -66,9 +78,8 @@ class Settings(context: Context) {
         set(v) = prefs.edit().putFloat("cityLon", v.toFloat()).apply()
 
     companion object {
-        const val SLOT_COUNT = 6
-        // 기본 타일: 6칸 모두 빈칸 (쉼표 5개 = 빈 문자열 6개)
-        const val DEFAULT_SLOTS = ",,,,,"
+        const val MAX_COLS = 6
+        const val MAX_ROWS = 4
         val ALL_WX_ITEMS = listOf("feels","hum","wind","rain","max","min","pm10","pm25","uvi")
         val WX_ITEM_LABELS = mapOf(
             "feels" to "체감온도", "hum" to "습도", "wind" to "바람",

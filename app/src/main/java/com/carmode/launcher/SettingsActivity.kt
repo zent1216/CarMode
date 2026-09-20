@@ -43,7 +43,22 @@ class SettingsActivity : AppCompatActivity() {
         setupWeatherItems()
         setupWeatherLoc()
         setupMusic()
+        setupTileGrid()
         setupUpdate()
+    }
+
+    // ── 타일 개수(가로/세로) ──
+    private fun setupTileGrid() {
+        refreshTileLabels()
+        b.btnColsMinus.setOnClickListener { settings.tileCols -= 1; refreshTileLabels() }
+        b.btnColsPlus.setOnClickListener  { settings.tileCols += 1; refreshTileLabels() }
+        b.btnRowsMinus.setOnClickListener { settings.tileRows -= 1; refreshTileLabels() }
+        b.btnRowsPlus.setOnClickListener  { settings.tileRows += 1; refreshTileLabels() }
+    }
+
+    private fun refreshTileLabels() {
+        b.tvCols.text = settings.tileCols.toString()
+        b.tvRows.text = settings.tileRows.toString()
     }
 
     // ── 업데이트 확인 ──
