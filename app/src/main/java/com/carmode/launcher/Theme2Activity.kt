@@ -340,10 +340,19 @@ class Theme2Activity : AppCompatActivity() {
             override fun surfaceCreated(holder: SurfaceHolder) { surfaceReady = true }
             override fun surfaceChanged(holder: SurfaceHolder, f: Int, w: Int, h: Int) {
                 surfaceReady = true
-                if (!embedRunning()) maybeStartEmbed()
+                if (shizukuEmbedder.isRunning) {
+                    // 이미 지도앱이 살아있으면 재시작하지 않고 표면만 다시 붙인다(튕김 방지).
+                    shizukuEmbedder.reattach(holder.surface)
+                    b.t2MapHint.visibility = View.GONE
+                    b.t2MapReload.visibility = View.VISIBLE
+                } else if (!embedRunning()) {
+                    maybeStartEmbed()
+                }
             }
             override fun surfaceDestroyed(holder: SurfaceHolder) {
-                surfaceReady = false; stopEmbed()
+                surfaceReady = false
+                // 런처가 잠깐 백그라운드로 갈 때: 지도앱은 살리고 표면만 뗀다.
+                if (shizukuEmbedder.isRunning) shizukuEmbedder.detach() else embedder.stop()
             }
         })
         // 지도 카드 터치 → 가상 디스플레이로 전달

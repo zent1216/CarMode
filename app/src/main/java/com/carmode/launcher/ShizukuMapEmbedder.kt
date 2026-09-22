@@ -105,6 +105,20 @@ class ShizukuMapEmbedder(private val context: Context) {
         }
     }
 
+    /** 표면 재부착: 런처가 돌아올 때 지도앱을 죽이지 않고 이어보기. */
+    fun reattach(surface: Surface) {
+        val svc = service ?: return
+        if (displayId < 0 || !surface.isValid) return
+        io.launch { try { svc.setSurface(surface) } catch (_: Throwable) {} }
+    }
+
+    /** 표면만 뗀다(런처가 잠깐 백그라운드로 갈 때). 디스플레이/지도앱은 유지. */
+    fun detach() {
+        val svc = service ?: return
+        if (displayId < 0) return
+        io.launch { try { svc.detachSurface() } catch (_: Throwable) {} }
+    }
+
     fun relaunch(mapPackage: String) {
         val svc = service ?: return
         val component = resolveComponent(mapPackage) ?: return

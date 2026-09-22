@@ -136,6 +136,14 @@ class MapUserService : IMapUserService.Stub {
         }
     }
 
+    override fun setSurface(surface: Surface) {
+        try { vd?.surface = surface } catch (e: Throwable) { Log.w(TAG, "setSurface 실패: ${e.message}") }
+    }
+
+    override fun detachSurface() {
+        try { vd?.surface = null } catch (e: Throwable) { Log.w(TAG, "detachSurface 실패: ${e.message}") }
+    }
+
     override fun releaseDisplay() {
         try { vd?.release() } catch (_: Throwable) {}
         vd = null

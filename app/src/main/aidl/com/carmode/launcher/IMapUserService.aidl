@@ -21,4 +21,11 @@ interface IMapUserService {
     // 지정 디스플레이에 터치 MotionEvent 를 직접 주입(프로세스 생성 없이 부드럽게).
     // action: MotionEvent.ACTION_DOWN/MOVE/UP/CANCEL, downTime: 제스처 시작 시각(uptimeMillis).
     boolean injectMotion(int displayId, int action, float x, float y, long downTime) = 4;
+
+    // 런처가 잠깐 백그라운드로 갔다 돌아올 때, 디스플레이/지도앱은 살린 채
+    // 출력 표면만 다시 붙인다(재임베드/재시작 없이 이어보기).
+    void setSurface(in Surface surface) = 5;
+
+    // 출력 표면만 뗀다(디스플레이/지도앱은 유지).
+    void detachSurface() = 6;
 }
