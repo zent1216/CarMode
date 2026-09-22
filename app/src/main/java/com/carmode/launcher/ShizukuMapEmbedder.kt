@@ -26,6 +26,7 @@ class ShizukuMapEmbedder(private val context: Context) {
     private val io = CoroutineScope(Dispatchers.IO)
     private var service: IMapUserService? = null
     private var bound = false
+    @Volatile private var starting = false   // 비동기 시작 중복 방지
 
     var displayId: Int = -1
         private set
@@ -65,24 +66,29 @@ class ShizukuMapEmbedder(private val context: Context) {
         if (width <= 0 || height <= 0 || mapPackage.isEmpty() || !surface.isValid) {
             onResult(false); return
         }
+        // 이미 실행 중이거나 시작 진행 중이면 중복 생성하지 않는다(디스플레이 다중 생성/튕김 방지).
+        if (isRunning || starting) { onResult(isRunning); return }
         val component = resolveComponent(mapPackage)
         if (component == null) { onResult(false); return }
+        starting = true
         // 좌표 보정용 크기 기록(디스플레이 해상도 = SurfaceView 픽셀 크기)
         viewW = width; viewH = height; dispW = width; dispH = height
 
         val doStart: () -> Unit = {
             io.launch {
                 val svc = service
-                if (svc == null) { postResult(onResult, false); return@launch }
+                if (svc == null) { starting = false; postResult(onResult, false); return@launch }
                 try {
                     val id = svc.createTrustedDisplay(surface, width, height, densityDpi)
-                    if (id < 0) { postResult(onResult, false); return@launch }
+                    if (id < 0) { starting = false; postResult(onResult, false); return@launch }
                     displayId = id
                     val ok = svc.startOnDisplay(id, component)
                     Log.i(TAG, "start id=$id component=$component ok=$ok")
+                    starting = false
                     postResult(onResult, ok)
                 } catch (e: Throwable) {
                     Log.e(TAG, "start 실패: ${e.message}", e)
+                    starting = false
                     postResult(onResult, false)
                 }
             }
@@ -92,7 +98,10 @@ class ShizukuMapEmbedder(private val context: Context) {
         else {
             pending = doStart
             try { Shizuku.bindUserService(userServiceArgs, connection) }
-            catch (e: Throwable) { Log.e(TAG, "bindUserService 실패: ${e.message}", e); onResult(false) }
+            catch (e: Throwable) {
+                Log.e(TAG, "bindUserService 실패: ${e.message}", e)
+                starting = false; onResult(false)
+            }
         }
     }
 
@@ -129,6 +138,7 @@ class ShizukuMapEmbedder(private val context: Context) {
     }
 
     fun stop() {
+        starting = false
         try { service?.releaseDisplay() } catch (_: Throwable) {}
         displayId = -1
         if (bound) { try { Shizuku.unbindUserService(userServiceArgs, connection, true) } catch (_: Throwable) {} }

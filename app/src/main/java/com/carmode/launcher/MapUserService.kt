@@ -66,8 +66,8 @@ class MapUserService : IMapUserService.Stub {
         return try {
             releaseDisplay()
             val dm = shellContext().getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
-            // SHOW_SYSTEM_DECORATIONS 를 빼서 하단 내비게이션 바(회색 바)가 안 생기게 한다.
-            // 화면 유지에는 TRUSTED 만 있으면 충분하다.
+            // 풀스크린 룩을 위해 SHOW_SYSTEM_DECORATIONS 는 끈다(상단 알림바/하단 내비바 없음).
+            // 대신 중복 생성/다중 태스크를 막아 지도앱이 카드에 머물게 한다.
             val flags = FLAG_PUBLIC or FLAG_PRESENTATION or FLAG_OWN_CONTENT_ONLY or FLAG_TRUSTED
             val d = dm.createVirtualDisplay("CarModeMapTrusted", width, height, densityDpi, surface, flags)
             vd = d
@@ -83,10 +83,11 @@ class MapUserService : IMapUserService.Stub {
     override fun startOnDisplay(displayId: Int, component: String): Boolean {
         if (displayId < 0 || component.isEmpty()) return false
         return try {
-            // shell 프로세스이므로 am 을 직접 실행. NEW_TASK 는 am 기본, 잘못된 옵션 금지.
+            // shell 프로세스이므로 am 을 직접 실행.
+            // --activity-multiple-task 를 빼서 지도앱 태스크가 새로 쌓이지 않고 재사용되게 한다
+            // (기존 태스크를 지정 디스플레이로 이동). NEW_TASK 는 am 기본.
             val p = Runtime.getRuntime().exec(arrayOf(
-                "am", "start", "--display", displayId.toString(),
-                "-n", component, "--activity-multiple-task"
+                "am", "start", "--display", displayId.toString(), "-n", component
             ))
             val code = p.waitFor()
             if (code != 0) {
