@@ -67,6 +67,8 @@ class ShizukuMapEmbedder(private val context: Context) {
         }
         val component = resolveComponent(mapPackage)
         if (component == null) { onResult(false); return }
+        // 좌표 보정용 크기 기록(디스플레이 해상도 = SurfaceView 픽셀 크기)
+        viewW = width; viewH = height; dispW = width; dispH = height
 
         val doStart: () -> Unit = {
             io.launch {
@@ -101,28 +103,30 @@ class ShizukuMapEmbedder(private val context: Context) {
         io.launch { try { svc.startOnDisplay(displayId, component) } catch (_: Throwable) {} }
     }
 
-    // ───────────────────── 터치 주입 (shell input) ─────────────────────
-    private var downX = 0f; private var downY = 0f; private var downT = 0L
-    private var lastX = 0f; private var lastY = 0f
+    // ───────────────────── 터치 주입 (InputManager 직접 주입) ─────────────────────
+    // 이벤트 순서 보장 + UI 스레드 차단 방지를 위해 단일 스레드에서 순차 주입.
+    private val touchExec = java.util.concurrent.Executors.newSingleThreadExecutor()
+    private var gestureDown = 0L
+    // 디스플레이 해상도(가상 디스플레이) / SurfaceView 픽셀 크기가 다르면 좌표 보정
+    private var dispW = 0; private var dispH = 0
+    private var viewW = 0; private var viewH = 0
 
     fun forwardTouch(e: MotionEvent) {
-        if (displayId < 0) return
-        when (e.actionMasked) {
-            MotionEvent.ACTION_DOWN -> { downX = e.x; downY = e.y; downT = System.currentTimeMillis(); lastX = e.x; lastY = e.y }
-            MotionEvent.ACTION_MOVE -> {
-                val dx = e.x - lastX; val dy = e.y - lastY
-                if (dx * dx + dy * dy > 900) { inject("input -d $displayId swipe ${lastX.toInt()} ${lastY.toInt()} ${e.x.toInt()} ${e.y.toInt()} 40"); lastX = e.x; lastY = e.y }
-            }
-            MotionEvent.ACTION_UP -> {
-                val dist = Math.hypot((e.x - downX).toDouble(), (e.y - downY).toDouble())
-                val dt = System.currentTimeMillis() - downT
-                if (dist < 20 && dt < 400) inject("input -d $displayId tap ${e.x.toInt()} ${e.y.toInt()}")
-                else inject("input -d $displayId swipe ${lastX.toInt()} ${lastY.toInt()} ${e.x.toInt()} ${e.y.toInt()} ${dt.coerceIn(60, 800)}")
-            }
+        val id = displayId
+        val svc = service
+        if (id < 0 || svc == null) return
+        val action = e.actionMasked
+        if (action == MotionEvent.ACTION_DOWN) gestureDown = android.os.SystemClock.uptimeMillis()
+        val dt = gestureDown
+        // 좌표 보정(현재는 1:1 이지만 안전하게 스케일)
+        val sx = if (viewW > 0) dispW.toFloat() / viewW else 1f
+        val sy = if (viewH > 0) dispH.toFloat() / viewH else 1f
+        val x = (e.x * sx).coerceIn(0f, (dispW - 1).coerceAtLeast(0).toFloat())
+        val y = (e.y * sy).coerceIn(0f, (dispH - 1).coerceAtLeast(0).toFloat())
+        touchExec.execute {
+            try { svc.injectMotion(id, action, x, y, dt) } catch (_: Throwable) {}
         }
     }
-
-    private fun inject(cmd: String) { io.launch { PrivShell.exec(cmd) } }
 
     fun stop() {
         try { service?.releaseDisplay() } catch (_: Throwable) {}

@@ -3,7 +3,11 @@ package com.carmode.launcher
 import android.content.Context
 import android.hardware.display.DisplayManager
 import android.hardware.display.VirtualDisplay
+import android.os.SystemClock
 import android.util.Log
+import android.view.InputDevice
+import android.view.InputEvent
+import android.view.MotionEvent
 import android.view.Surface
 
 /**
@@ -62,8 +66,9 @@ class MapUserService : IMapUserService.Stub {
         return try {
             releaseDisplay()
             val dm = shellContext().getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
-            val flags = FLAG_PUBLIC or FLAG_PRESENTATION or FLAG_OWN_CONTENT_ONLY or
-                FLAG_TRUSTED or FLAG_SHOW_SYSTEM_DECORATIONS
+            // SHOW_SYSTEM_DECORATIONS 를 빼서 하단 내비게이션 바(회색 바)가 안 생기게 한다.
+            // 화면 유지에는 TRUSTED 만 있으면 충분하다.
+            val flags = FLAG_PUBLIC or FLAG_PRESENTATION or FLAG_OWN_CONTENT_ONLY or FLAG_TRUSTED
             val d = dm.createVirtualDisplay("CarModeMapTrusted", width, height, densityDpi, surface, flags)
             vd = d
             val id = d?.display?.displayId ?: -1
@@ -91,6 +96,41 @@ class MapUserService : IMapUserService.Stub {
             code == 0
         } catch (e: Throwable) {
             Log.e(TAG, "startOnDisplay 실패: ${e.message}", e)
+            false
+        }
+    }
+
+    // InputManager (shell 은 INJECT_EVENTS 보유) 로 MotionEvent 직접 주입
+    private val inputManager: Any? by lazy {
+        try { shellContext().getSystemService("input") } catch (e: Throwable) { null }
+    }
+    private val injectMethod by lazy {
+        try {
+            inputManager?.javaClass?.getMethod(
+                "injectInputEvent", InputEvent::class.java, Int::class.javaPrimitiveType
+            )?.apply { isAccessible = true }
+        } catch (e: Throwable) { null }
+    }
+    private val setDisplayIdMethod by lazy {
+        try {
+            MotionEvent::class.java.getMethod("setDisplayId", Int::class.javaPrimitiveType)
+        } catch (e: Throwable) { null }
+    }
+
+    override fun injectMotion(displayId: Int, action: Int, x: Float, y: Float, downTime: Long): Boolean {
+        return try {
+            val now = SystemClock.uptimeMillis()
+            val dt = if (downTime <= 0L) now else downTime
+            val ev = MotionEvent.obtain(dt, now, action, x, y, 0)
+            ev.source = InputDevice.SOURCE_TOUCHSCREEN
+            setDisplayIdMethod?.invoke(ev, displayId)
+            val im = inputManager; val inj = injectMethod
+            val ok = if (im != null && inj != null)
+                (inj.invoke(im, ev, 0) as? Boolean) ?: false else false   // 0 = ASYNC
+            ev.recycle()
+            ok
+        } catch (e: Throwable) {
+            Log.w(TAG, "injectMotion 실패: ${e.message}")
             false
         }
     }

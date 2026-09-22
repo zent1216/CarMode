@@ -17,4 +17,8 @@ interface IMapUserService {
 
     // 가상 디스플레이 해제.
     void releaseDisplay() = 3;
+
+    // 지정 디스플레이에 터치 MotionEvent 를 직접 주입(프로세스 생성 없이 부드럽게).
+    // action: MotionEvent.ACTION_DOWN/MOVE/UP/CANCEL, downTime: 제스처 시작 시각(uptimeMillis).
+    boolean injectMotion(int displayId, int action, float x, float y, long downTime) = 4;
 }
