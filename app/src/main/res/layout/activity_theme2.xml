@@ -8,20 +8,142 @@
     android:padding="12dp"
     android:baselineAligned="false">
 
-    <!-- ───────── 좌측 카드 열 ───────── -->
+    <!-- ───────── 좌측: 지도 카드 (크게) ───────── -->
+    <FrameLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="60"
+        android:layout_marginEnd="12dp"
+        android:background="@drawable/panel_bg"
+        android:clipToOutline="true">
+
+        <!-- 지도앱이 렌더링되는 표면 -->
+        <SurfaceView
+            android:id="@+id/t2MapSurface"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <!-- 임베드 전/실패 시 안내 오버레이 -->
+        <LinearLayout
+            android:id="@+id/t2MapHint"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="24dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🗺"
+                android:textSize="48sp" />
+
+            <TextView
+                android:id="@+id/t2MapHintText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:gravity="center"
+                android:text="지정한 지도앱이 이 카드 안에서 실행됩니다.\n설정에서 지도앱을 먼저 지정하세요."
+                android:textColor="@color/text_dim"
+                android:textSize="15sp" />
+
+            <TextView
+                android:id="@+id/t2MapStart"
+                style="@style/TopButton"
+                android:layout_marginTop="16dp"
+                android:text="지도 실행" />
+        </LinearLayout>
+
+        <!-- 우상단 재시작 버튼 (작게, 지도 정보 안 가리게) -->
+        <TextView
+            android:id="@+id/t2MapReload"
+            android:layout_width="34dp"
+            android:layout_height="34dp"
+            android:layout_gravity="top|end"
+            android:layout_margin="8dp"
+            android:gravity="center"
+            android:background="@drawable/topbtn_bg"
+            android:text="↻"
+            android:textColor="@color/text_dim"
+            android:textSize="15sp"
+            android:visibility="gone"
+            android:contentDescription="지도 재시작" />
+    </FrameLayout>
+
+    <!-- ───────── 우측: 상단바 + 날씨 + 퀵실행 + 음악 ───────── -->
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="match_parent"
-        android:layout_weight="34"
-        android:layout_marginEnd="12dp"
+        android:layout_weight="40"
         android:orientation="vertical">
 
-        <!-- 날씨 카드 -->
+        <!-- 상단 바: 작은 시계 · 상태아이콘 · 모든앱 · 설정 (편집 없음) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="42dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/t2TopTime"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:gravity="center_vertical"
+                android:paddingStart="4dp"
+                android:text="--:--"
+                android:textColor="@color/text"
+                android:textSize="17sp"
+                android:textStyle="bold" />
+
+            <ImageView
+                android:id="@+id/t2Wifi"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:padding="8dp"
+                android:src="@drawable/ic_wifi"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="와이파이" />
+
+            <ImageView
+                android:id="@+id/t2Bt"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:padding="8dp"
+                android:src="@drawable/ic_bluetooth"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="블루투스" />
+
+            <ImageView
+                android:id="@+id/t2Data"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_marginEnd="8dp"
+                android:padding="8dp"
+                android:src="@drawable/ic_cellular"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="모바일 데이터" />
+
+            <TextView
+                android:id="@+id/t2AllApps"
+                style="@style/TopButton"
+                android:layout_marginEnd="6dp"
+                android:text="모든 앱" />
+
+            <TextView
+                android:id="@+id/t2Settings"
+                style="@style/TopButton"
+                android:text="설정" />
+        </LinearLayout>
+
+        <!-- 날씨 카드 (약간 작게) -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
             android:background="@drawable/panel_bg"
-            android:padding="16dp"
+            android:padding="12dp"
             android:orientation="horizontal"
             android:gravity="center_vertical">
 
@@ -37,7 +159,7 @@
                     android:layout_height="wrap_content"
                     android:text="위치 확인 중…"
                     android:textColor="@color/text_dim"
-                    android:textSize="13sp" />
+                    android:textSize="12sp" />
 
                 <TextView
                     android:id="@+id/t2WxTemp"
@@ -45,7 +167,7 @@
                     android:layout_height="wrap_content"
                     android:text="--°"
                     android:textColor="@color/text"
-                    android:textSize="38sp"
+                    android:textSize="30sp"
                     android:textStyle="bold" />
 
                 <TextView
@@ -54,7 +176,7 @@
                     android:layout_height="wrap_content"
                     android:text="—"
                     android:textColor="@color/text_dim"
-                    android:textSize="13sp" />
+                    android:textSize="12sp" />
             </LinearLayout>
 
             <TextView
@@ -62,276 +184,104 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="☁️"
-                android:textSize="40sp" />
+                android:textSize="34sp" />
         </LinearLayout>
 
-        <!-- 시계 카드 -->
-        <LinearLayout
+        <!-- 퀵실행: 아이콘 한 줄 (라벨 없음, 정사각형) -->
+        <androidx.gridlayout.widget.GridLayout
+            android:id="@+id/t2Grid"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:background="@drawable/panel_bg"
-            android:padding="16dp"
-            android:orientation="vertical">
+            android:layout_marginTop="10dp"
+            app:rowCount="1"
+            app:useDefaultMargins="false" />
 
-            <TextView
-                android:id="@+id/t2Time"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="--:--"
-                android:textColor="@color/text"
-                android:textSize="34sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/t2Date"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="--월 --일"
-                android:textColor="@color/text_dim"
-                android:textSize="14sp" />
-        </LinearLayout>
-
-        <!-- 퀵실행(앱 타일) 카드 -->
+        <!-- 음악(미디어) 카드 — 크게, 남는 공간 채움 -->
         <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:layout_marginTop="12dp"
-            android:background="@drawable/panel_bg"
-            android:padding="12dp"
-            android:orientation="vertical">
-
-            <TextView
-                style="@style/SectionLabel"
-                android:text="퀵실행" />
-
-            <androidx.gridlayout.widget.GridLayout
-                android:id="@+id/t2Grid"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                app:columnCount="3"
-                app:rowCount="2"
-                app:useDefaultMargins="false" />
-        </LinearLayout>
-
-        <!-- 음악 미니 카드 -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:background="@drawable/panel_bg"
-            android:padding="12dp"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
-
-            <ImageView
-                android:id="@+id/t2Art"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:background="@drawable/album_bg"
-                android:scaleType="centerCrop"
-                android:clipToOutline="true" />
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginStart="10dp"
-                android:orientation="vertical">
-
-                <TextView
-                    android:id="@+id/t2Title"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="재생 중인 곡 없음"
-                    android:textColor="@color/text"
-                    android:textSize="14sp"
-                    android:textStyle="bold"
-                    android:singleLine="true"
-                    android:ellipsize="marquee"
-                    android:marqueeRepeatLimit="marquee_forever"
-                    android:focusable="true"
-                    android:focusableInTouchMode="true" />
-
-                <TextView
-                    android:id="@+id/t2Artist"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="음악 앱을 실행하세요"
-                    android:textColor="@color/text_dim"
-                    android:textSize="12sp"
-                    android:singleLine="true"
-                    android:ellipsize="end" />
-            </LinearLayout>
-
-            <ImageView
-                android:id="@+id/t2Prev"
-                android:layout_width="38dp"
-                android:layout_height="38dp"
-                android:padding="7dp"
-                android:src="@drawable/ic_skip_prev"
-                android:clickable="true"
-                android:focusable="true" />
-
-            <ImageView
-                android:id="@+id/t2Play"
-                android:layout_width="44dp"
-                android:layout_height="44dp"
-                android:layout_marginHorizontal="6dp"
-                android:background="@drawable/play_btn_bg"
-                android:padding="11dp"
-                android:src="@drawable/ic_play"
-                android:clickable="true"
-                android:focusable="true" />
-
-            <ImageView
-                android:id="@+id/t2Next"
-                android:layout_width="38dp"
-                android:layout_height="38dp"
-                android:padding="7dp"
-                android:src="@drawable/ic_skip_next"
-                android:clickable="true"
-                android:focusable="true" />
-        </LinearLayout>
-    </LinearLayout>
-
-    <!-- ───────── 우측: 상단바 + 지도 카드 ───────── -->
-    <LinearLayout
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
-        android:layout_weight="66"
-        android:orientation="vertical">
-
-        <!-- 상단 바 -->
-        <RelativeLayout
-            android:layout_width="match_parent"
-            android:layout_height="44dp"
-            android:paddingHorizontal="6dp">
-
-            <TextView
-                android:id="@+id/t2TopTime"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_alignParentStart="true"
-                android:gravity="center_vertical"
-                android:text="--:--"
-                android:textColor="@color/text"
-                android:textSize="18sp"
-                android:textStyle="bold" />
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_alignParentEnd="true"
-                android:orientation="horizontal"
-                android:gravity="center_vertical">
-
-                <ImageView
-                    android:id="@+id/t2Wifi"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:padding="9dp"
-                    android:src="@drawable/ic_wifi"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="와이파이" />
-
-                <ImageView
-                    android:id="@+id/t2Bt"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:layout_marginStart="2dp"
-                    android:padding="9dp"
-                    android:src="@drawable/ic_bluetooth"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="블루투스" />
-
-                <ImageView
-                    android:id="@+id/t2Data"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:layout_marginStart="2dp"
-                    android:layout_marginEnd="10dp"
-                    android:padding="9dp"
-                    android:src="@drawable/ic_cellular"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="모바일 데이터" />
-
-                <TextView
-                    android:id="@+id/t2AllApps"
-                    style="@style/TopButton"
-                    android:layout_marginEnd="8dp"
-                    android:text="모든 앱" />
-
-                <TextView
-                    android:id="@+id/t2Settings"
-                    style="@style/TopButton"
-                    android:layout_marginEnd="8dp"
-                    android:text="설정" />
-
-                <TextView
-                    android:id="@+id/t2Edit"
-                    style="@style/TopButton"
-                    android:text="편집" />
-            </LinearLayout>
-        </RelativeLayout>
-
-        <!-- 지도 카드 -->
-        <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
             android:layout_marginTop="10dp"
             android:background="@drawable/panel_bg"
-            android:clipToOutline="true">
+            android:padding="18dp"
+            android:orientation="vertical"
+            android:gravity="center">
 
-            <!-- 지도앱이 렌더링되는 표면 -->
-            <SurfaceView
-                android:id="@+id/t2MapSurface"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent" />
+            <ImageView
+                android:id="@+id/t2Art"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:adjustViewBounds="true"
+                android:maxWidth="220dp"
+                android:background="@drawable/album_bg"
+                android:scaleType="centerCrop"
+                android:clipToOutline="true" />
 
-            <!-- 임베드 전/실패 시 안내 오버레이 -->
-            <LinearLayout
-                android:id="@+id/t2MapHint"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:orientation="vertical"
-                android:gravity="center"
-                android:padding="24dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="🗺"
-                    android:textSize="48sp" />
-
-                <TextView
-                    android:id="@+id/t2MapHintText"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:gravity="center"
-                    android:text="지정한 지도앱이 이 카드 안에서 실행됩니다.\n설정에서 지도앱을 먼저 지정하세요."
-                    android:textColor="@color/text_dim"
-                    android:textSize="15sp" />
-
-                <TextView
-                    android:id="@+id/t2MapStart"
-                    style="@style/TopButton"
-                    android:layout_marginTop="16dp"
-                    android:text="지도 실행" />
-            </LinearLayout>
-
-            <!-- 우상단 재시작/전환 버튼 (임베드 중 노출) -->
             <TextView
-                android:id="@+id/t2MapReload"
-                style="@style/TopButton"
-                android:layout_gravity="top|end"
-                android:layout_margin="10dp"
-                android:visibility="gone"
-                android:text="↻ 재시작" />
-        </FrameLayout>
+                android:id="@+id/t2Title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:gravity="center"
+                android:text="재생 중인 곡 없음"
+                android:textColor="@color/text"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:singleLine="true"
+                android:ellipsize="marquee"
+                android:marqueeRepeatLimit="marquee_forever"
+                android:focusable="true"
+                android:focusableInTouchMode="true" />
+
+            <TextView
+                android:id="@+id/t2Artist"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:gravity="center"
+                android:text="음악 앱을 실행하세요"
+                android:textColor="@color/text_dim"
+                android:textSize="14sp"
+                android:singleLine="true"
+                android:ellipsize="end" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <ImageView
+                    android:id="@+id/t2Prev"
+                    android:layout_width="52dp"
+                    android:layout_height="52dp"
+                    android:padding="10dp"
+                    android:src="@drawable/ic_skip_prev"
+                    android:clickable="true"
+                    android:focusable="true" />
+
+                <ImageView
+                    android:id="@+id/t2Play"
+                    android:layout_width="64dp"
+                    android:layout_height="64dp"
+                    android:layout_marginHorizontal="16dp"
+                    android:background="@drawable/play_btn_bg"
+                    android:padding="16dp"
+                    android:src="@drawable/ic_play"
+                    android:clickable="true"
+                    android:focusable="true" />
+
+                <ImageView
+                    android:id="@+id/t2Next"
+                    android:layout_width="52dp"
+                    android:layout_height="52dp"
+                    android:padding="10dp"
+                    android:src="@drawable/ic_skip_next"
+                    android:clickable="true"
+                    android:focusable="true" />
+            </LinearLayout>
+        </LinearLayout>
     </LinearLayout>
 </LinearLayout>

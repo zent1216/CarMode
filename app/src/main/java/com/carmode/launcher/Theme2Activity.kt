@@ -97,14 +97,11 @@ class Theme2Activity : AppCompatActivity() {
         b.t2AllApps.setOnClickListener {
             startActivity(Intent(this, AllAppsActivity::class.java))
         }
-        b.t2Edit.setOnClickListener { toggleEdit() }
+        // 테마2에는 편집 버튼이 없다. 타일을 길게 누르면 편집(삭제) 모드로 전환된다.
     }
 
     private fun toggleEdit() {
         editing = !editing
-        b.t2Edit.text = if (editing) "완료" else "편집"
-        b.t2Edit.setBackgroundResource(if (editing) R.drawable.topbtn_bg_on else R.drawable.topbtn_bg)
-        b.t2Edit.setTextColor(ContextCompat.getColor(this, if (editing) R.color.bg else R.color.text_dim))
         renderTiles()
     }
 
@@ -162,11 +159,7 @@ class Theme2Activity : AppCompatActivity() {
             override fun run() {
                 val c = Calendar.getInstance()
                 val t = SimpleDateFormat("a h:mm", Locale.KOREA).format(c.time)
-                b.t2Time.text = t
                 b.t2TopTime.text = t
-                val days = arrayOf("일","월","화","수","목","금","토")
-                val d = c.get(Calendar.DAY_OF_WEEK) - 1
-                b.t2Date.text = "${c.get(Calendar.MONTH)+1}월 ${c.get(Calendar.DAY_OF_MONTH)}일 (${days[d]})"
                 refreshStatusIcons()
                 clockHandler.postDelayed(this, 1000)
             }
@@ -211,20 +204,34 @@ class Theme2Activity : AppCompatActivity() {
     private fun renderTiles() {
         val grid = b.t2Grid
         grid.removeAllViews()
-        val cols = settings.tileCols; val rows = settings.tileRows
+        // 테마2 퀵실행은 항상 한 줄. 칸 수만 조정(설정의 가로 개수 사용).
+        val cols = settings.tileCols.coerceIn(1, Settings.MAX_COLS)
         grid.columnCount = cols
-        grid.rowCount = rows
+        grid.rowCount = 1
         slots = settings.getSlots()
-        slots.forEachIndexed { i, key ->
+        for (i in 0 until cols) {
+            val key = slots.getOrElse(i) { "" }
             val entry = AppCatalog.byKey(key) ?: if (key.contains('.')) entryFromPackage(key) else null
             val view = if (entry != null) buildTile(entry, i) else buildEmpty(i)
             val lp = GridLayout.LayoutParams().apply {
                 width = 0; height = 0
-                columnSpec = GridLayout.spec(i % cols, 1f)
-                rowSpec = GridLayout.spec(i / cols, 1f)
-                setMargins(dp(6), dp(6), dp(6), dp(6))
+                columnSpec = GridLayout.spec(i, 1f)
+                rowSpec = GridLayout.spec(0)
+                setMargins(dp(5), dp(5), dp(5), dp(5))
             }
             grid.addView(view, lp)
+        }
+        // 셀을 최대한 정사각형에 맞춘다(셀 너비에 맞춰 높이 지정, 과하게 크지 않게 상한).
+        grid.post {
+            val cw = if (cols > 0) grid.width / cols else 0
+            if (cw <= 0) return@post
+            val side = (cw - dp(10)).coerceIn(dp(52), dp(104))
+            for (idx in 0 until grid.childCount) {
+                val child = grid.getChildAt(idx)
+                val lp = child.layoutParams as GridLayout.LayoutParams
+                lp.height = side
+                child.layoutParams = lp
+            }
         }
     }
 
@@ -247,7 +254,8 @@ class Theme2Activity : AppCompatActivity() {
         } else {
             iconTv.visibility = View.VISIBLE; iconImg.visibility = View.GONE; iconTv.text = entry.icon
         }
-        v.findViewById<TextView>(R.id.tileLabel).text = entry.name
+        // 테마2 퀵실행은 아이콘만 표시(라벨/서브 숨김)
+        v.findViewById<TextView>(R.id.tileLabel).visibility = View.GONE
         v.findViewById<TextView>(R.id.tileSub).visibility = View.GONE
         val del = v.findViewById<TextView>(R.id.tileDelete)
         del.visibility = if (editing) View.VISIBLE else View.GONE
