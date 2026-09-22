@@ -58,6 +58,20 @@ class Theme2Activity : AppCompatActivity() {
     private val shizukuEmbedder by lazy { ShizukuMapEmbedder(this) }
     private var surfaceReady = false
 
+    // Shizuku 연결/권한 자동 감지 → 켜지는 즉시 지도 자동 임베드(부팅 후 Shizuku만 켜면 끝)
+    private val shizukuBinderListener = rikka.shizuku.Shizuku.OnBinderReceivedListener {
+        if (settings.themeMode == 2) {
+            if (rikka.shizuku.Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED) {
+                if (surfaceReady && !embedRunning()) startEmbed()
+            }
+            showHint()
+        }
+    }
+    private val shizukuPermListener = rikka.shizuku.Shizuku.OnRequestPermissionResultListener { _, result ->
+        if (result == PackageManager.PERMISSION_GRANTED && surfaceReady && !embedRunning()) startEmbed()
+        showHint()
+    }
+
     /** Shizuku(무권한, 신뢰 디스플레이) 경로를 쓸지. 루트가 있으면 기존 경로. */
     private fun useShizuku() = PrivShell.mode() == PrivShell.MODE_SHIZUKU
     private fun embedRunning() = shizukuEmbedder.isRunning || embedder.isRunning
@@ -87,6 +101,10 @@ class Theme2Activity : AppCompatActivity() {
         startClock()
         startMediaPoll()
         refreshWeather()
+
+        // Shizuku 가 켜지는 즉시 자동으로 지도 임베드 시작(부팅 후 재부여 번거로움 최소화)
+        try { rikka.shizuku.Shizuku.addBinderReceivedListenerSticky(shizukuBinderListener) } catch (_: Throwable) {}
+        try { rikka.shizuku.Shizuku.addRequestPermissionResultListener(shizukuPermListener) } catch (_: Throwable) {}
     }
 
     // ───────────────────── 상단 버튼 / 테마 전환 ─────────────────────
@@ -537,6 +555,8 @@ class Theme2Activity : AppCompatActivity() {
         super.onDestroy()
         clockHandler.removeCallbacksAndMessages(null)
         mediaHandler.removeCallbacksAndMessages(null)
+        try { rikka.shizuku.Shizuku.removeBinderReceivedListener(shizukuBinderListener) } catch (_: Throwable) {}
+        try { rikka.shizuku.Shizuku.removeRequestPermissionResultListener(shizukuPermListener) } catch (_: Throwable) {}
         stopEmbed()
     }
 }
