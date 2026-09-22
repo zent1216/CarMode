@@ -55,20 +55,6 @@
                 android:text="지도 실행" />
         </LinearLayout>
 
-        <!-- 우상단 재시작 버튼 (작게, 지도 정보 안 가리게) -->
-        <TextView
-            android:id="@+id/t2MapReload"
-            android:layout_width="34dp"
-            android:layout_height="34dp"
-            android:layout_gravity="top|end"
-            android:layout_margin="8dp"
-            android:gravity="center"
-            android:background="@drawable/topbtn_bg"
-            android:text="↻"
-            android:textColor="@color/text_dim"
-            android:textSize="15sp"
-            android:visibility="gone"
-            android:contentDescription="지도 재시작" />
     </FrameLayout>
 
     <!-- ───────── 우측: 상단바 + 날씨 + 퀵실행 + 음악 ───────── -->
@@ -87,15 +73,22 @@
 
             <TextView
                 android:id="@+id/t2TopTime"
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="match_parent"
-                android:layout_weight="1"
                 android:gravity="center_vertical"
                 android:paddingStart="4dp"
                 android:text="--:--"
                 android:textColor="@color/text"
                 android:textSize="17sp"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                android:singleLine="true"
+                android:maxLines="1" />
+
+            <!-- 시계와 아이콘 사이 여백(아이콘/버튼을 오른쪽으로 민다) -->
+            <View
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1" />
 
             <ImageView
                 android:id="@+id/t2Wifi"
@@ -124,6 +117,20 @@
                 android:src="@drawable/ic_cellular"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="모바일 데이터" />
+
+            <!-- 지도 재시작 (임베드 중에만 표시, 지도 위를 안 가리게 상단바로 이동) -->
+            <TextView
+                android:id="@+id/t2MapReload"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_marginEnd="6dp"
+                android:gravity="center"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:text="↻"
+                android:textColor="@color/text_dim"
+                android:textSize="18sp"
+                android:visibility="gone"
+                android:contentDescription="지도 재시작" />
 
             <TextView
                 android:id="@+id/t2AllApps"
