@@ -38,6 +38,7 @@ class SettingsActivity : AppCompatActivity() {
         b.btnBack.setOnClickListener { finish() }
 
         setupHomeApp()
+        setupTheme()
         setupKeepScreen()
         setupWidgetSide()
         setupWeatherItems()
@@ -153,6 +154,108 @@ class SettingsActivity : AppCompatActivity() {
             }
         }
         b.rowSetHome.setOnClickListener { b.btnSetHome.performClick() }
+    }
+
+    // ── 테마 (테마1 / 테마2 지도임베드) ──
+    private fun setupTheme() {
+        refreshThemeButtons()
+        b.btnTheme1.setOnClickListener { settings.themeMode = 1; refreshThemeButtons() }
+        b.btnTheme2.setOnClickListener { settings.themeMode = 2; refreshThemeButtons() }
+
+        refreshMapAppSub()
+        b.rowMapApp.setOnClickListener { showMapAppPicker() }
+        b.btnMapApp.setOnClickListener { showMapAppPicker() }
+
+        refreshPrivStatus()
+        b.rowPrivSetup.setOnClickListener { showPrivDialog() }
+        b.btnPrivSetup.setOnClickListener { showPrivDialog() }
+    }
+
+    private fun refreshThemeButtons() {
+        val t2 = settings.themeMode == 2
+        b.btnTheme1.setBackgroundResource(if (!t2) R.drawable.topbtn_bg_on else R.drawable.topbtn_bg)
+        b.btnTheme1.setTextColor(ContextCompat.getColor(this, if (!t2) R.color.bg else R.color.text_dim))
+        b.btnTheme2.setBackgroundResource(if (t2) R.drawable.topbtn_bg_on else R.drawable.topbtn_bg)
+        b.btnTheme2.setTextColor(ContextCompat.getColor(this, if (t2) R.color.bg else R.color.text_dim))
+    }
+
+    private fun refreshMapAppSub() {
+        val pkg = settings.mapPackage
+        b.tvMapAppSub.text = if (pkg.isEmpty()) "미지정 — 지도 카드에 띄울 앱을 선택하세요" else {
+            try { packageManager.getApplicationLabel(packageManager.getApplicationInfo(pkg, 0)).toString() }
+            catch (e: Exception) { pkg }
+        }
+    }
+
+    private fun showMapAppPicker() {
+        val intent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
+        val apps = packageManager.queryIntentActivities(intent, 0)
+            .sortedBy { it.loadLabel(packageManager).toString() }
+        val scroll = android.widget.ScrollView(this)
+        val container = android.widget.LinearLayout(this).apply {
+            orientation = android.widget.LinearLayout.VERTICAL
+            setPadding(dp(12), dp(8), dp(12), dp(8))
+        }
+        scroll.addView(container)
+        val dialog = AlertDialog.Builder(this, R.style.Theme_CarMode_Dialog)
+            .setTitle("지도앱 선택").setView(scroll).setNegativeButton("닫기", null).create()
+        apps.forEach { app ->
+            val row = LayoutInflater.from(this).inflate(R.layout.item_app, container, false)
+            row.findViewById<android.widget.ImageView>(R.id.appIcon)
+                .setImageDrawable(app.loadIcon(packageManager))
+            row.findViewById<android.widget.TextView>(R.id.appName).text = app.loadLabel(packageManager)
+            row.setOnClickListener {
+                settings.mapPackage = app.activityInfo.packageName
+                refreshMapAppSub(); dialog.dismiss()
+            }
+            container.addView(row, rowLp())
+        }
+        dialog.show()
+    }
+
+    private fun refreshPrivStatus() {
+        val (txt, colorRes) = when (PrivShell.mode()) {
+            PrivShell.MODE_ROOT -> "루트 사용 가능 ✓" to R.color.teal
+            PrivShell.MODE_SHIZUKU -> "Shizuku 연결됨 ✓" to R.color.teal
+            else -> "미설정 — 지도 임베드에 루트 또는 Shizuku 필요" to R.color.danger
+        }
+        b.tvPrivStatus.text = txt
+        b.tvPrivStatus.setTextColor(ContextCompat.getColor(this, colorRes))
+    }
+
+    private fun showPrivDialog() {
+        val alive = PrivShell.shizukuAlive()
+        val granted = PrivShell.shizukuGranted()
+        val msg = when {
+            PrivShell.hasRoot() -> "루트가 감지되었습니다. 별도 설정 없이 지도 임베드를 사용할 수 있습니다."
+            granted -> "Shizuku 권한이 이미 허용되어 있습니다."
+            alive -> "Shizuku 가 실행 중입니다. 이 앱에 권한을 허용하세요."
+            else ->
+                "지도를 화면 안에서 구동하려면 루트 또는 Shizuku 가 필요합니다.\n\n" +
+                "[Shizuku 설치·실행 방법]\n" +
+                "1) Play스토어에서 'Shizuku' 설치\n" +
+                "2) 개발자 옵션 → 무선 디버깅 켜기\n" +
+                "3) Shizuku 앱에서 '무선 디버깅으로 시작' → 페어링\n" +
+                "4) 이 화면으로 돌아와 '권한 요청'\n\n" +
+                "* 루팅 불필요, PC 불필요. 폰 재부팅 시 Shizuku 재시작 필요."
+        }
+        val builder = AlertDialog.Builder(this, R.style.Theme_CarMode_Dialog)
+            .setTitle("지도 임베드 권한").setMessage(msg).setNegativeButton("닫기", null)
+        if (alive && !granted) {
+            builder.setPositiveButton("권한 요청") { _, _ ->
+                try {
+                    rikka.shizuku.Shizuku.addRequestPermissionResultListener(
+                        object : rikka.shizuku.Shizuku.OnRequestPermissionResultListener {
+                            override fun onRequestPermissionResult(requestCode: Int, grantResult: Int) {
+                                rikka.shizuku.Shizuku.removeRequestPermissionResultListener(this)
+                                refreshPrivStatus()
+                            }
+                        })
+                    rikka.shizuku.Shizuku.requestPermission(1001)
+                } catch (e: Throwable) { toast("Shizuku 권한 요청 실패") }
+            }
+        }
+        builder.show()
     }
 
     // ── 화면 항상 켜기 ──
@@ -387,6 +490,7 @@ class SettingsActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         refreshNlsStatus()
+        refreshPrivStatus()
     }
 
     override fun onDestroy() {

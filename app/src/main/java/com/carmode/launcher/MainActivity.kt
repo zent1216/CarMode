@@ -74,10 +74,19 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        settings = Settings(this)
+
+        // 테마2 선택 시 전용 액티비티로 전환 (홈 진입점은 MainActivity 유지)
+        if (settings.themeMode == 2) {
+            startActivity(Intent(this, Theme2Activity::class.java))
+            finish()
+            return
+        }
+
         b = ActivityMainBinding.inflate(layoutInflater)
         setContentView(b.root)
 
-        settings = Settings(this)
         slots = settings.getSlots()
 
         setupTopButtons()
@@ -148,6 +157,12 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        if (isFinishing) return
+        // 설정에서 테마2로 바꿨다면 전환
+        if (settings.themeMode == 2) {
+            startActivity(Intent(this, Theme2Activity::class.java))
+            finish(); return
+        }
         applyScreenFlags()
         applyWidgetSide()
         setupWeatherCellLabels()

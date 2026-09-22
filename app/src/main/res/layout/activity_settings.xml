@@ -86,6 +86,141 @@
                     android:text="설정하기" />
             </LinearLayout>
 
+            <!-- ── 테마 ── -->
+            <TextView
+                style="@style/SectionLabel"
+                android:layout_marginTop="28dp"
+                android:text="테마" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/panel_bg"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="18dp">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="홈 테마"
+                        android:textColor="@color/text"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="3dp"
+                        android:text="테마1: 위젯·타일 / 테마2: 지도 임베드"
+                        android:textColor="@color/text_dim"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/btnTheme1"
+                    style="@style/TopButton"
+                    android:text="테마1" />
+
+                <TextView
+                    android:id="@+id/btnTheme2"
+                    style="@style/TopButton"
+                    android:layout_marginStart="8dp"
+                    android:text="테마2" />
+            </LinearLayout>
+
+            <!-- 테마2: 지도앱 지정 -->
+            <LinearLayout
+                android:id="@+id/rowMapApp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/panel_bg"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="18dp"
+                android:layout_marginTop="8dp">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="테마2 지도앱"
+                        android:textColor="@color/text"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvMapAppSub"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="3dp"
+                        android:text="미지정"
+                        android:textColor="@color/text_dim"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/btnMapApp"
+                    style="@style/TopButton"
+                    android:text="선택" />
+            </LinearLayout>
+
+            <!-- 테마2: 지도 임베드 권한 (루트/Shizuku) -->
+            <LinearLayout
+                android:id="@+id/rowPrivSetup"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/panel_bg"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="18dp"
+                android:layout_marginTop="8dp">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="지도 임베드 권한"
+                        android:textColor="@color/text"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvPrivStatus"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="3dp"
+                        android:text="확인 중…"
+                        android:textColor="@color/text_dim"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/btnPrivSetup"
+                    style="@style/TopButton"
+                    android:text="설정" />
+            </LinearLayout>
+
             <!-- ── 디스플레이 ── -->
             <TextView
                 style="@style/SectionLabel"

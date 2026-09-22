@@ -59,4 +59,8 @@ dependencies {
 
     // Kotlin 코루틴 (비동기 네트워크)
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1'
+
+    // Shizuku — 루팅 없이 adb(shell) 권한으로 가상 디스플레이에 지도앱 실행/터치 주입
+    implementation 'dev.rikka.shizuku:api:13.1.5'
+    implementation 'dev.rikka.shizuku:provider:13.1.5'
 }

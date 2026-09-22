@@ -16,6 +16,11 @@
     <!-- 앱 내 업데이트 설치 -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
+    <!-- 테마2: 무선 ADB(내장) 페어링/접속을 위한 로컬 네트워크 멀티캐스트 -->
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
+    <!-- Shizuku 연동 (선택 경로) -->
+    <uses-permission android:name="moe.shizuku.manager.permission.API_V23" />
+
     <!-- 다른 앱 실행 가능 여부 조회 (Android 11+ 패키지 가시성) -->
     <queries>
         <intent>
@@ -97,6 +102,25 @@
             android:exported="false"
             android:screenOrientation="sensorLandscape"
             android:theme="@style/Theme.CarMode" />
+
+        <!-- 테마2: 지도 임베드 홈 -->
+        <activity
+            android:name=".Theme2Activity"
+            android:exported="false"
+            android:launchMode="singleTask"
+            android:screenOrientation="sensorLandscape"
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:stateNotNeeded="true"
+            android:theme="@style/Theme.CarMode" />
+
+        <!-- Shizuku provider (루팅 없이 shell 권한 획득 경로) -->
+        <provider
+            android:name="rikka.shizuku.ShizukuProvider"
+            android:authorities="${applicationId}.shizuku"
+            android:multiprocess="false"
+            android:enabled="true"
+            android:exported="true"
+            android:permission="android.permission.INTERACT_ACROSS_USERS_FULL" />
 
     </application>
 </manifest>

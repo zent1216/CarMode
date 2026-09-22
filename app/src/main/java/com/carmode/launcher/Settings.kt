@@ -46,6 +46,21 @@ class Settings(context: Context) {
         get() = prefs.getString("musicPkg", "") ?: ""
         set(v) = prefs.edit().putString("musicPkg", v).apply()
 
+    // ── 테마 모드 (1 = 기존 위젯/타일, 2 = 지도 임베드형) ──
+    var themeMode: Int
+        get() = prefs.getInt("themeMode", 1).coerceIn(1, 2)
+        set(v) = prefs.edit().putInt("themeMode", v.coerceIn(1, 2)).apply()
+
+    // ── 테마2 지도 카드에 임베드할 지도앱 패키지명 ──
+    var mapPackage: String
+        get() = prefs.getString("mapPkg", "") ?: ""
+        set(v) = prefs.edit().putString("mapPkg", v).apply()
+
+    // ── 테마2 지도 자동 임베드(앱 켜질 때 자동 실행) ──
+    var mapAutoStart: Boolean
+        get() = prefs.getBoolean("mapAutoStart", true)
+        set(v) = prefs.edit().putBoolean("mapAutoStart", v).apply()
+
     // ── 날씨 표시 항목 선택 ──
     var wxItems: Set<String>
         get() {
