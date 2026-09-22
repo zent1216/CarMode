@@ -194,16 +194,21 @@
                 android:textSize="34sp" />
         </LinearLayout>
 
+        <!-- 여백(위) — 빈 공간을 위아래로 나눠 균형 -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
         <!-- 퀵실행: 아이콘 한 줄 (라벨 없음, 정사각형) -->
         <androidx.gridlayout.widget.GridLayout
             android:id="@+id/t2Grid"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
             app:rowCount="1"
             app:useDefaultMargins="false" />
 
-        <!-- 남는 공간 (미디어를 아래로 자연스럽게) -->
+        <!-- 여백(아래) — 미디어를 아래로 -->
         <View
             android:layout_width="match_parent"
             android:layout_height="0dp"
