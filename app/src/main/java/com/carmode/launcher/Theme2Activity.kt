@@ -203,34 +203,32 @@ class Theme2Activity : AppCompatActivity() {
     // ───────────────────── 퀵실행 타일 ─────────────────────
     private fun renderTiles() {
         val grid = b.t2Grid
-        grid.removeAllViews()
-        // 테마2 퀵실행은 항상 한 줄. 칸 수만 조정(설정의 가로 개수 사용).
         val cols = settings.tileCols.coerceIn(1, Settings.MAX_COLS)
-        grid.columnCount = cols
-        grid.rowCount = 1
-        slots = settings.getSlots()
-        for (i in 0 until cols) {
-            val key = slots.getOrElse(i) { "" }
-            val entry = AppCatalog.byKey(key) ?: if (key.contains('.')) entryFromPackage(key) else null
-            val view = if (entry != null) buildTile(entry, i) else buildEmpty(i)
-            val lp = GridLayout.LayoutParams().apply {
-                width = 0; height = 0
-                columnSpec = GridLayout.spec(i, 1f)
-                rowSpec = GridLayout.spec(0)
-                setMargins(dp(5), dp(5), dp(5), dp(5))
-            }
-            grid.addView(view, lp)
-        }
-        // 셀을 최대한 정사각형에 맞춘다(셀 너비에 맞춰 높이 지정, 과하게 크지 않게 상한).
+        // 그리드 실제 크기를 측정한 뒤(post) 세로 공간에 맞춰 줄 수를 자동 결정한다.
         grid.post {
-            val cw = if (cols > 0) grid.width / cols else 0
-            if (cw <= 0) return@post
-            val side = (cw - dp(10)).coerceIn(dp(52), dp(104))
-            for (idx in 0 until grid.childCount) {
-                val child = grid.getChildAt(idx)
-                val lp = child.layoutParams as GridLayout.LayoutParams
-                lp.height = side
-                child.layoutParams = lp
+            val gw = grid.width
+            val gh = grid.height
+            if (gw <= 0 || gh <= 0) return@post
+            val cell = gw / cols                              // 한 칸 너비(정사각형 기준)
+            if (cell <= 0) return@post
+            // 세로 공간을 채우도록 줄 수 결정(칸이 정사각형에 가깝게, 화면 클수록 줄 증가)
+            val rows = Math.round(gh.toFloat() / cell).coerceIn(1, Settings.MAX_ROWS)
+            val n = cols * rows
+            slots = settings.getSlots(n)
+            grid.removeAllViews()
+            grid.columnCount = cols
+            grid.rowCount = rows
+            for (i in 0 until n) {
+                val key = slots.getOrElse(i) { "" }
+                val entry = AppCatalog.byKey(key) ?: if (key.contains('.')) entryFromPackage(key) else null
+                val view = if (entry != null) buildTile(entry, i) else buildEmpty(i)
+                val lp = GridLayout.LayoutParams().apply {
+                    width = 0; height = 0
+                    columnSpec = GridLayout.spec(i % cols, 1f)   // 가로 균등 분할
+                    rowSpec = GridLayout.spec(i / cols, 1f)      // 세로 균등 분할(공간 채움)
+                    setMargins(dp(5), dp(5), dp(5), dp(5))
+                }
+                grid.addView(view, lp)
             }
         }
     }

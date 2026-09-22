@@ -19,8 +19,11 @@ class Settings(context: Context) {
     val slotCount: Int get() = tileCols * tileRows
 
     // ── 타일 구성 (칸 수 = 가로×세로, 빈 칸은 빈 문자열) ──
-    fun getSlots(): MutableList<String> {
-        val n = slotCount
+    fun getSlots(): MutableList<String> = getSlots(slotCount)
+
+    /** 원하는 개수만큼 슬롯을 돌려준다(부족하면 빈칸으로 채움). 테마2는 해상도에 따라 줄 수가 가변. */
+    fun getSlots(count: Int): MutableList<String> {
+        val n = count.coerceAtLeast(0)
         val raw = prefs.getString("slots", "") ?: ""
         return raw.split(",").toMutableList().also {
             while (it.size < n) it.add("")

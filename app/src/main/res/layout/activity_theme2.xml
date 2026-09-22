@@ -194,25 +194,14 @@
                 android:textSize="34sp" />
         </LinearLayout>
 
-        <!-- 여백(위) — 빈 공간을 위아래로 나눠 균형 -->
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1" />
-
-        <!-- 퀵실행: 아이콘 한 줄 (라벨 없음, 정사각형) -->
+        <!-- 퀵실행: 아이콘 타일. 남는 세로 공간을 채우고, 줄 수는 해상도에 맞춰 코드에서 자동 결정 -->
         <androidx.gridlayout.widget.GridLayout
             android:id="@+id/t2Grid"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:rowCount="1"
-            app:useDefaultMargins="false" />
-
-        <!-- 여백(아래) — 미디어를 아래로 -->
-        <View
-            android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="1" />
+            android:layout_weight="1"
+            android:layout_marginTop="10dp"
+            app:useDefaultMargins="false" />
 
         <!-- 음악(미디어) 카드 — 가로형, 앨범/글씨만 키움 -->
         <LinearLayout
