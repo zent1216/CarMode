@@ -109,10 +109,12 @@ class MapEmbedder(private val context: Context) {
                 // 표준 실행이 반영될 시간을 살짝 준 뒤 상위 권한으로 확정
                 Thread.sleep(if (standardOk) 400 else 0)
                 val cn = comp.flattenToShortString()
-                PrivShell.exec(
-                    "am start --display $dispId -n $cn " +
-                        "--activity-multiple-task --activity-new-task"
+                // NOTE: `am start` 에는 --activity-new-task 옵션이 없다(있으면 명령 전체가 실패).
+                // NEW_TASK 는 am 이 기본 부여하므로 --activity-multiple-task 만 준다.
+                val ok = PrivShell.exec(
+                    "am start --display $dispId -n $cn --activity-multiple-task"
                 )
+                Log.i(TAG, "priv am start(display=$dispId) → $ok (mode=${PrivShell.mode()})")
             }
         }
     }

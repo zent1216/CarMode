@@ -55,7 +55,17 @@ class Theme2Activity : AppCompatActivity() {
     private var slots = mutableListOf<String>()
 
     private val embedder by lazy { MapEmbedder(this) }
+    private val shizukuEmbedder by lazy { ShizukuMapEmbedder(this) }
     private var surfaceReady = false
+
+    /** Shizuku(무권한, 신뢰 디스플레이) 경로를 쓸지. 루트가 있으면 기존 경로. */
+    private fun useShizuku() = PrivShell.mode() == PrivShell.MODE_SHIZUKU
+    private fun embedRunning() = shizukuEmbedder.isRunning || embedder.isRunning
+    private fun forwardTouchToActive(e: MotionEvent) {
+        if (shizukuEmbedder.isRunning) shizukuEmbedder.forwardTouch(e)
+        else if (embedder.isRunning) embedder.forwardTouch(e)
+    }
+    private fun stopEmbed() { shizukuEmbedder.stop(); embedder.stop() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -322,24 +332,32 @@ class Theme2Activity : AppCompatActivity() {
             override fun surfaceCreated(holder: SurfaceHolder) { surfaceReady = true }
             override fun surfaceChanged(holder: SurfaceHolder, f: Int, w: Int, h: Int) {
                 surfaceReady = true
-                if (!embedder.isRunning) maybeStartEmbed()
+                if (!embedRunning()) maybeStartEmbed()
             }
             override fun surfaceDestroyed(holder: SurfaceHolder) {
-                surfaceReady = false; embedder.stop()
+                surfaceReady = false; stopEmbed()
             }
         })
         // 지도 카드 터치 → 가상 디스플레이로 전달
         b.t2MapSurface.setOnTouchListener { _, e ->
-            if (embedder.isRunning) { embedder.forwardTouch(e); true } else false
+            if (embedRunning()) { forwardTouchToActive(e); true } else false
         }
     }
 
     private fun setupMapButtons() {
         b.t2MapStart.setOnClickListener { startEmbedOrGuide() }
-        b.t2MapReload.setOnClickListener { embedder.relaunch(settings.mapPackage) }
+        b.t2MapReload.setOnClickListener {
+            if (shizukuEmbedder.isRunning) shizukuEmbedder.relaunch(settings.mapPackage)
+            else embedder.relaunch(settings.mapPackage)
+        }
     }
 
     private fun maybeStartEmbed() {
+        if (embedRunning()) {              // 이미 임베드 중이면 재생성 금지(튕김 방지)
+            b.t2MapHint.visibility = View.GONE
+            b.t2MapReload.visibility = View.VISIBLE
+            return
+        }
         if (!settings.mapAutoStart) { showHint(); return }
         if (settings.mapPackage.isEmpty()) { showHint(); return }
         if (!PrivShell.available()) { showHint(); return }
@@ -358,17 +376,29 @@ class Theme2Activity : AppCompatActivity() {
     }
 
     private fun startEmbed() {
+        if (embedRunning()) return          // 중복 시작 방지
         val pkg = settings.mapPackage
         if (pkg.isEmpty() || !surfaceReady) return
         val surface = b.t2MapSurface.holder.surface
         val w = b.t2MapSurface.width; val h = b.t2MapSurface.height
         if (!surface.isValid || w <= 0 || h <= 0) return
-        val ok = embedder.start(surface, w, h, resources.displayMetrics.densityDpi, pkg)
-        if (ok) {
-            b.t2MapHint.visibility = View.GONE
-            b.t2MapReload.visibility = View.VISIBLE
+        val dpi = resources.displayMetrics.densityDpi
+
+        if (useShizuku()) {
+            // Shizuku: shell 프로세스에서 신뢰 디스플레이 생성(비동기)
+            b.t2MapHintText.text = "지도 불러오는 중…"
+            shizukuEmbedder.start(surface, w, h, dpi, pkg) { ok ->
+                if (ok) {
+                    b.t2MapHint.visibility = View.GONE
+                    b.t2MapReload.visibility = View.VISIBLE
+                } else showHint()
+            }
         } else {
-            showHint()
+            val ok = embedder.start(surface, w, h, dpi, pkg)
+            if (ok) {
+                b.t2MapHint.visibility = View.GONE
+                b.t2MapReload.visibility = View.VISIBLE
+            } else showHint()
         }
     }
 
@@ -492,6 +522,6 @@ class Theme2Activity : AppCompatActivity() {
         super.onDestroy()
         clockHandler.removeCallbacksAndMessages(null)
         mediaHandler.removeCallbacksAndMessages(null)
-        embedder.stop()
+        stopEmbed()
     }
 }

@@ -1,8 +1,11 @@
 package com.carmode.launcher
 
 import android.content.pm.PackageManager
+import android.util.Log
 import rikka.shizuku.Shizuku
+import java.io.BufferedReader
 import java.io.DataOutputStream
+import java.io.InputStreamReader
 
 /**
  * 상위 권한 셸 실행기.
@@ -18,6 +21,7 @@ import java.io.DataOutputStream
  */
 object PrivShell {
 
+    private const val TAG = "PrivShell"
     const val MODE_NONE = 0
     const val MODE_ROOT = 1
     const val MODE_SHIZUKU = 2
@@ -81,6 +85,18 @@ object PrivShell {
         m.isAccessible = true
         val proc = m.invoke(null, arrayOf("sh", "-c", cmd), null, null)
         val waitFor = proc.javaClass.getMethod("waitFor")
-        (waitFor.invoke(proc) as Int) == 0
-    } catch (e: Throwable) { false }
+        val code = waitFor.invoke(proc) as Int
+        if (code != 0) {
+            // 표준에러를 읽어 실패 원인을 로그로 남긴다
+            val err = try {
+                val es = proc.javaClass.getMethod("getErrorStream").invoke(proc) as java.io.InputStream
+                BufferedReader(InputStreamReader(es)).readText().trim()
+            } catch (_: Throwable) { "" }
+            Log.w(TAG, "shizuku exec code=$code cmd=[$cmd] err=$err")
+        }
+        code == 0
+    } catch (e: Throwable) {
+        Log.e(TAG, "shizuku exec 예외 cmd=[$cmd]: ${e.message}", e)
+        false
+    }
 }
