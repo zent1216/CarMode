@@ -17,13 +17,13 @@
         android:background="@drawable/panel_bg"
         android:clipToOutline="true">
 
-        <!-- 지도앱이 렌더링되는 표면 -->
-        <SurfaceView
-            android:id="@+id/t2MapSurface"
+        <!-- 카카오맵 (카드 안에서 우리가 직접 렌더링) -->
+        <com.kakao.vectormap.MapView
+            android:id="@+id/t2KakaoMap"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
 
-        <!-- 임베드 전/실패 시 안내 오버레이 -->
+        <!-- 로딩/오류 안내 오버레이 -->
         <LinearLayout
             android:id="@+id/t2MapHint"
             android:layout_width="match_parent"
@@ -44,15 +44,9 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
                 android:gravity="center"
-                android:text="지정한 지도앱이 이 카드 안에서 실행됩니다.\n설정에서 지도앱을 먼저 지정하세요."
+                android:text="지도를 불러오는 중…"
                 android:textColor="@color/text_dim"
                 android:textSize="15sp" />
-
-            <TextView
-                android:id="@+id/t2MapStart"
-                style="@style/TopButton"
-                android:layout_marginTop="16dp"
-                android:text="지도 실행" />
         </LinearLayout>
 
     </FrameLayout>

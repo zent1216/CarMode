@@ -17,8 +17,6 @@ import android.os.Looper
 import android.provider.Settings as AndroidSettings
 import android.telephony.TelephonyManager
 import android.view.LayoutInflater
-import android.view.MotionEvent
-import android.view.SurfaceHolder
 import android.view.View
 import android.view.WindowManager
 import android.widget.ImageView
@@ -31,6 +29,14 @@ import androidx.core.content.ContextCompat
 import androidx.gridlayout.widget.GridLayout
 import com.carmode.launcher.databinding.ActivityTheme2Binding
 import com.google.android.gms.location.LocationServices
+import com.kakao.vectormap.KakaoMap
+import com.kakao.vectormap.KakaoMapReadyCallback
+import com.kakao.vectormap.MapLifeCycleCallback
+import com.kakao.vectormap.LatLng
+import com.kakao.vectormap.camera.CameraUpdateFactory
+import com.kakao.vectormap.label.LabelOptions
+import com.kakao.vectormap.label.LabelStyle
+import com.kakao.vectormap.label.LabelStyles
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -54,32 +60,8 @@ class Theme2Activity : AppCompatActivity() {
     private var editing = false
     private var slots = mutableListOf<String>()
 
-    private val embedder by lazy { MapEmbedder(this) }
-    private val shizukuEmbedder by lazy { ShizukuMapEmbedder(this) }
-    private var surfaceReady = false
-
-    // Shizuku 연결/권한 자동 감지 → 켜지는 즉시 지도 자동 임베드(부팅 후 Shizuku만 켜면 끝)
-    private val shizukuBinderListener = rikka.shizuku.Shizuku.OnBinderReceivedListener {
-        if (settings.themeMode == 2) {
-            if (rikka.shizuku.Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED) {
-                if (surfaceReady && !embedRunning()) startEmbed()
-            }
-            showHint()
-        }
-    }
-    private val shizukuPermListener = rikka.shizuku.Shizuku.OnRequestPermissionResultListener { _, result ->
-        if (result == PackageManager.PERMISSION_GRANTED && surfaceReady && !embedRunning()) startEmbed()
-        showHint()
-    }
-
-    /** Shizuku(무권한, 신뢰 디스플레이) 경로를 쓸지. 루트가 있으면 기존 경로. */
-    private fun useShizuku() = PrivShell.mode() == PrivShell.MODE_SHIZUKU
-    private fun embedRunning() = shizukuEmbedder.isRunning || embedder.isRunning
-    private fun forwardTouchToActive(e: MotionEvent) {
-        if (shizukuEmbedder.isRunning) shizukuEmbedder.forwardTouch(e)
-        else if (embedder.isRunning) embedder.forwardTouch(e)
-    }
-    private fun stopEmbed() { shizukuEmbedder.stop(); embedder.stop() }
+    private var kakaoMap: KakaoMap? = null
+    private var myLocationLabel: com.kakao.vectormap.label.Label? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -94,17 +76,12 @@ class Theme2Activity : AppCompatActivity() {
         setupTopButtons()
         setupStatusToggles()
         setupMusicControls()
-        setupMapSurface()
-        setupMapButtons()
+        setupMap()
         b.t2Title.isSelected = true
 
         startClock()
         startMediaPoll()
         refreshWeather()
-
-        // Shizuku 가 켜지는 즉시 자동으로 지도 임베드 시작(부팅 후 재부여 번거로움 최소화)
-        try { rikka.shizuku.Shizuku.addBinderReceivedListenerSticky(shizukuBinderListener) } catch (_: Throwable) {}
-        try { rikka.shizuku.Shizuku.addRequestPermissionResultListener(shizukuPermListener) } catch (_: Throwable) {}
     }
 
     // ───────────────────── 상단 버튼 / 테마 전환 ─────────────────────
@@ -133,8 +110,12 @@ class Theme2Activity : AppCompatActivity() {
         renderTiles()
         refreshStatusIcons()
         refreshWeather()
-        // 임베드가 꺼져 있고 조건이 되면 재개
-        maybeStartEmbed()
+        try { b.t2KakaoMap.resume() } catch (_: Throwable) {}
+    }
+
+    override fun onPause() {
+        super.onPause()
+        try { b.t2KakaoMap.pause() } catch (_: Throwable) {}
     }
 
     // ───────────────────── 상태 토글 ─────────────────────
@@ -350,139 +331,55 @@ class Theme2Activity : AppCompatActivity() {
         Toast.makeText(this, "${entry.name} 앱을 열 수 없습니다", Toast.LENGTH_SHORT).show()
     }
 
-    // ───────────────────── 지도 임베드 ─────────────────────
-    private fun setupMapSurface() {
-        b.t2MapSurface.holder.addCallback(object : SurfaceHolder.Callback {
-            override fun surfaceCreated(holder: SurfaceHolder) { surfaceReady = true }
-            override fun surfaceChanged(holder: SurfaceHolder, f: Int, w: Int, h: Int) {
-                surfaceReady = true
-                if (shizukuEmbedder.isRunning) {
-                    // 이미 지도앱이 살아있으면 재시작하지 않고 표면만 다시 붙인다(튕김 방지).
-                    shizukuEmbedder.reattach(holder.surface)
-                    b.t2MapHint.visibility = View.GONE
-                    b.t2MapReload.visibility = View.VISIBLE
-                } else if (!embedRunning()) {
-                    maybeStartEmbed()
-                }
+    // ───────────────────── 카카오맵 (카드 안 지도) ─────────────────────
+    private fun setupMap() {
+        b.t2KakaoMap.start(object : MapLifeCycleCallback() {
+            override fun onMapDestroy() { kakaoMap = null }
+            override fun onMapError(error: Exception?) {
+                b.t2MapHint.visibility = View.VISIBLE
+                b.t2MapHintText.text = "지도 오류: ${error?.message ?: "알 수 없음"}"
             }
-            override fun surfaceDestroyed(holder: SurfaceHolder) {
-                surfaceReady = false
-                // 런처가 잠깐 백그라운드로 갈 때: 지도앱은 살리고 표면만 뗀다.
-                if (shizukuEmbedder.isRunning) shizukuEmbedder.detach() else embedder.stop()
+        }, object : KakaoMapReadyCallback() {
+            override fun onMapReady(map: KakaoMap) {
+                kakaoMap = map
+                b.t2MapHint.visibility = View.GONE
+                showMyLocation()
             }
         })
-        // 지도 카드 터치 → 가상 디스플레이로 전달
-        b.t2MapSurface.setOnTouchListener { _, e ->
-            if (embedRunning()) { forwardTouchToActive(e); true } else false
-        }
     }
 
-    private fun setupMapButtons() {
-        b.t2MapStart.setOnClickListener { startEmbedOrGuide() }
-        b.t2MapReload.setOnClickListener {
-            if (shizukuEmbedder.isRunning) shizukuEmbedder.relaunch(settings.mapPackage)
-            else embedder.relaunch(settings.mapPackage)
+    /** 현재 위치로 카메라 이동 + 위치 마커 표시 */
+    private fun showMyLocation() {
+        val map = kakaoMap ?: return
+        val fallback = LatLng.from(37.5665, 126.9780) // 서울
+        fun place(pos: LatLng) {
+            try {
+                map.moveCamera(CameraUpdateFactory.newCenterPosition(pos, 15))
+                val lm = map.labelManager ?: return
+                if (myLocationLabel == null) {
+                    val styles = lm.addLabelStyles(
+                        LabelStyles.from(LabelStyle.from(R.drawable.ic_my_location))
+                    )
+                    myLocationLabel = lm.layer?.addLabel(
+                        LabelOptions.from(pos).setStyles(styles)
+                    )
+                } else {
+                    myLocationLabel?.moveTo(pos)
+                }
+            } catch (_: Throwable) {}
         }
-    }
-
-    private fun maybeStartEmbed() {
-        if (embedRunning()) {              // 이미 임베드 중이면 재생성 금지(튕김 방지)
-            b.t2MapHint.visibility = View.GONE
-            b.t2MapReload.visibility = View.VISIBLE
-            return
-        }
-        if (!settings.mapAutoStart) { showHint(); return }
-        if (settings.mapPackage.isEmpty()) { showHint(); return }
-        if (!PrivShell.available()) { showHint(); return }
-        startEmbed()
-    }
-
-    private fun startEmbedOrGuide() {
-        when {
-            settings.mapPackage.isEmpty() -> {
-                Toast.makeText(this, "설정 > 테마2 지도앱을 먼저 지정하세요", Toast.LENGTH_LONG).show()
-                startActivity(Intent(this, SettingsActivity::class.java))
-            }
-            !PrivShell.available() -> showPrivGuide()
-            else -> startEmbed()
-        }
-    }
-
-    private fun startEmbed() {
-        if (embedRunning()) return          // 중복 시작 방지
-        val pkg = settings.mapPackage
-        if (pkg.isEmpty() || !surfaceReady) return
-        val surface = b.t2MapSurface.holder.surface
-        val w = b.t2MapSurface.width; val h = b.t2MapSurface.height
-        if (!surface.isValid || w <= 0 || h <= 0) return
-        val dpi = resources.displayMetrics.densityDpi
-
-        if (useShizuku()) {
-            // Shizuku: shell 프로세스에서 신뢰 디스플레이 생성(비동기)
-            b.t2MapHintText.text = "지도 불러오는 중…"
-            shizukuEmbedder.start(surface, w, h, dpi, pkg) { ok ->
-                if (ok) {
-                    b.t2MapHint.visibility = View.GONE
-                    b.t2MapReload.visibility = View.VISIBLE
-                } else showHint()
-            }
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+            == PackageManager.PERMISSION_GRANTED) {
+            try {
+                LocationServices.getFusedLocationProviderClient(this).lastLocation
+                    .addOnSuccessListener { loc ->
+                        place(if (loc != null) LatLng.from(loc.latitude, loc.longitude) else fallback)
+                    }
+                    .addOnFailureListener { place(fallback) }
+            } catch (e: SecurityException) { place(fallback) }
         } else {
-            val ok = embedder.start(surface, w, h, dpi, pkg)
-            if (ok) {
-                b.t2MapHint.visibility = View.GONE
-                b.t2MapReload.visibility = View.VISIBLE
-            } else showHint()
+            place(fallback)
         }
-    }
-
-    private fun showHint() {
-        b.t2MapHint.visibility = View.VISIBLE
-        b.t2MapReload.visibility = View.GONE
-        b.t2MapHintText.text = when {
-            settings.mapPackage.isEmpty() ->
-                "설정 > 테마2 에서 지도앱을 먼저 지정하세요."
-            !PrivShell.available() ->
-                "지도앱을 화면 안에서 구동하려면 루트 또는 Shizuku 권한이 필요합니다.\n'지도 실행'을 눌러 안내를 확인하세요."
-            else -> "‘지도 실행’을 누르면 지정한 지도앱이 이 카드 안에서 실행됩니다."
-        }
-    }
-
-    /** 루트·Shizuku 둘 다 없을 때 안내 + 분할화면 폴백 */
-    private fun showPrivGuide() {
-        val alive = PrivShell.shizukuAlive()
-        val msg = if (alive)
-            "Shizuku 가 실행 중이지만 이 앱에 권한이 없습니다.\n권한을 허용하시겠습니까?"
-        else
-            "화면 안 지도 구동에는 루트 또는 Shizuku 가 필요합니다.\n\n" +
-            "Shizuku(무료)를 설치하고 '무선 디버깅'으로 실행하면 루팅 없이 사용할 수 있습니다.\n\n" +
-            "지금은 지도앱을 분할화면으로 실행할 수 있습니다."
-        val builder = AlertDialog.Builder(this, R.style.Theme_CarMode_Dialog)
-            .setTitle("지도 임베드 권한")
-            .setMessage(msg)
-            .setNegativeButton("분할화면으로 실행") { _, _ -> launchMapAdjacent() }
-        if (alive) {
-            builder.setPositiveButton("권한 요청") { _, _ ->
-                try { rikka.shizuku.Shizuku.requestPermission(1001) } catch (_: Throwable) {}
-            }
-        } else {
-            builder.setPositiveButton("확인", null)
-        }
-        builder.show()
-    }
-
-    /** 폴백: 분할화면 인접칸으로 지도앱 실행 */
-    private fun launchMapAdjacent() {
-        val pkg = settings.mapPackage
-        val launch = packageManager.getLaunchIntentForPackage(pkg) ?: run {
-            Toast.makeText(this, "지도앱을 열 수 없습니다", Toast.LENGTH_SHORT).show(); return
-        }
-        launch.addFlags(
-            Intent.FLAG_ACTIVITY_NEW_TASK or
-            Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT or
-            Intent.FLAG_ACTIVITY_MULTIPLE_TASK
-        )
-        try { startActivity(launch) }
-        catch (e: Exception) { Toast.makeText(this, "분할화면 실행 실패", Toast.LENGTH_SHORT).show() }
     }
 
     // ───────────────────── 음악 위젯 ─────────────────────
@@ -555,8 +452,5 @@ class Theme2Activity : AppCompatActivity() {
         super.onDestroy()
         clockHandler.removeCallbacksAndMessages(null)
         mediaHandler.removeCallbacksAndMessages(null)
-        try { rikka.shizuku.Shizuku.removeBinderReceivedListener(shizukuBinderListener) } catch (_: Throwable) {}
-        try { rikka.shizuku.Shizuku.removeRequestPermissionResultListener(shizukuPermListener) } catch (_: Throwable) {}
-        stopEmbed()
     }
 }
