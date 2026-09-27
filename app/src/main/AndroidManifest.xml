@@ -33,6 +33,11 @@
         <intent><data android:scheme="nflx" /></intent>
         <intent><data android:scheme="tel" /></intent>
         <intent><data android:scheme="sms" /></intent>
+        <!-- 지도앱 판별용(geo: 링크를 여는 앱) -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="geo" />
+        </intent>
     </queries>
 
     <application

@@ -189,9 +189,28 @@ class SettingsActivity : AppCompatActivity() {
         }
     }
 
-    private fun showMapAppPicker() {
+    /** 지도·내비 앱 판별: 앱 분류가 '지도' / geo: 링크 처리 / 알려진 국내 지도앱 */
+    private val knownMapPkgs = setOf(
+        "com.skt.tmap.ku", "com.skt.skaf.l001mtm091", "com.locnall.KimGiSa",   // 티맵, 카카오내비
+        "net.daum.android.map", "com.nhn.android.nmap",                      // 카카오맵, 네이버지도
+        "com.google.android.apps.maps", "com.mnsoft.lgunavi", "kt.navi"      // 구글맵, 아틀란/유플러스, 원내비
+    )
+
+    private fun isMapApp(pkg: String, geoPkgs: Set<String>): Boolean {
+        if (pkg in knownMapPkgs || pkg in geoPkgs) return true
+        return try {
+            packageManager.getApplicationInfo(pkg, 0).category ==
+                android.content.pm.ApplicationInfo.CATEGORY_MAPS
+        } catch (e: Exception) { false }
+    }
+
+    private fun showMapAppPicker(showAll: Boolean = false) {
         val intent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
+        val geoPkgs = packageManager.queryIntentActivities(
+            Intent(Intent.ACTION_VIEW, android.net.Uri.parse("geo:37.5665,126.9780")), 0
+        ).map { it.activityInfo.packageName }.toSet()
         val apps = packageManager.queryIntentActivities(intent, 0)
+            .filter { showAll || isMapApp(it.activityInfo.packageName, geoPkgs) }
             .sortedBy { it.loadLabel(packageManager).toString() }
         val scroll = android.widget.ScrollView(this)
         val container = android.widget.LinearLayout(this).apply {
@@ -199,8 +218,19 @@ class SettingsActivity : AppCompatActivity() {
             setPadding(dp(12), dp(8), dp(12), dp(8))
         }
         scroll.addView(container)
-        val dialog = AlertDialog.Builder(this, R.style.Theme_CarMode_Dialog)
-            .setTitle("지도앱 선택").setView(scroll).setNegativeButton("닫기", null).create()
+        val builder = AlertDialog.Builder(this, R.style.Theme_CarMode_Dialog)
+            .setTitle(if (showAll) "지도앱 선택 (모든 앱)" else "지도앱 선택")
+            .setView(scroll).setNegativeButton("닫기", null)
+        // 필터에 원하는 앱이 없을 때를 대비해 전체 목록으로 전환
+        if (!showAll) builder.setNeutralButton("모든 앱 보기") { _, _ -> showMapAppPicker(showAll = true) }
+        val dialog = builder.create()
+        if (apps.isEmpty()) {
+            container.addView(android.widget.TextView(this).apply {
+                text = "지도앱을 찾지 못했습니다. '모든 앱 보기'에서 선택하세요."
+                setTextColor(ContextCompat.getColor(this@SettingsActivity, R.color.text_dim))
+                setPadding(dp(8), dp(12), dp(8), dp(12))
+            })
+        }
         apps.forEach { app ->
             val row = LayoutInflater.from(this).inflate(R.layout.item_app, container, false)
             row.findViewById<android.widget.ImageView>(R.id.appIcon)
