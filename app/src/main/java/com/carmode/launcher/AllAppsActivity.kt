@@ -37,7 +37,7 @@ class AllAppsActivity : AppCompatActivity() {
             cell.findViewById<ImageView>(R.id.appIcon).setImageDrawable(app.loadIcon(pm))
             cell.findViewById<TextView>(R.id.appName).text = app.loadLabel(pm)
             cell.setOnClickListener {
-                pm.getLaunchIntentForPackage(app.activityInfo.packageName)?.let { startActivity(it) }
+                pm.getLaunchIntentForPackage(app.activityInfo.packageName)?.let { FreeformDock.startFullscreen(this, it) }
             }
             val lp = GridLayout.LayoutParams().apply {
                 columnSpec = GridLayout.spec(i % cols, 1f)

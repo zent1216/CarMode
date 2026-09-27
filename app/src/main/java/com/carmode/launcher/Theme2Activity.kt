@@ -374,18 +374,18 @@ class Theme2Activity : AppCompatActivity() {
             return
         }
         if (entry.packageName.isNotEmpty()) {
-            packageManager.getLaunchIntentForPackage(entry.packageName)?.let { startActivity(it); return }
+            packageManager.getLaunchIntentForPackage(entry.packageName)?.let { FreeformDock.startFullscreen(this, it); return }
             Toast.makeText(this, "${entry.name} 앱을 열 수 없습니다", Toast.LENGTH_SHORT).show(); return
         }
         if (entry.uri.isNotEmpty()) {
             try {
-                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(entry.uri))
+                FreeformDock.startFullscreen(this, Intent(Intent.ACTION_VIEW, Uri.parse(entry.uri))
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); return
             } catch (_: Exception) {}
         }
         val pkg = AppCatalog.packageFallback[entry.key]
         if (pkg != null) {
-            packageManager.getLaunchIntentForPackage(pkg)?.let { startActivity(it); return }
+            packageManager.getLaunchIntentForPackage(pkg)?.let { FreeformDock.startFullscreen(this, it); return }
             try { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$pkg"))); return }
             catch (_: Exception) {}
         }
@@ -425,7 +425,7 @@ class Theme2Activity : AppCompatActivity() {
         b.t2Next.setOnClickListener { activeController?.transportControls?.skipToNext() ?: openMusicApp() }
         val open = View.OnClickListener {
             val ctrl = activeController
-            if (ctrl != null) packageManager.getLaunchIntentForPackage(ctrl.packageName)?.let { startActivity(it) }
+            if (ctrl != null) packageManager.getLaunchIntentForPackage(ctrl.packageName)?.let { FreeformDock.startFullscreen(this, it) }
             else openMusicApp()
         }
         b.t2Art.setOnClickListener(open); b.t2Title.setOnClickListener(open); b.t2Artist.setOnClickListener(open)
@@ -474,7 +474,7 @@ class Theme2Activity : AppCompatActivity() {
 
     private fun openMusicApp() {
         val pkg = settings.musicPackage
-        if (pkg.isNotEmpty()) packageManager.getLaunchIntentForPackage(pkg)?.let { startActivity(it); return }
+        if (pkg.isNotEmpty()) packageManager.getLaunchIntentForPackage(pkg)?.let { FreeformDock.startFullscreen(this, it); return }
         Toast.makeText(this, "설정에서 음악 앱을 지정하세요", Toast.LENGTH_SHORT).show()
     }
 

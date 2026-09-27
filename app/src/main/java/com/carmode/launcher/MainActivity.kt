@@ -542,7 +542,7 @@ class MainActivity : AppCompatActivity() {
         // 0) 설치된 앱 (패키지명으로 저장된 경우)
         if (entry.packageName.isNotEmpty()) {
             val launch = packageManager.getLaunchIntentForPackage(entry.packageName)
-            if (launch != null) { startActivity(launch); return }
+            if (launch != null) { FreeformDock.startFullscreen(this, launch); return }
             Toast.makeText(this, "${entry.name} 앱을 열 수 없습니다", Toast.LENGTH_SHORT).show()
             return
         }
@@ -551,7 +551,7 @@ class MainActivity : AppCompatActivity() {
             try {
                 val intent = Intent(Intent.ACTION_VIEW, Uri.parse(entry.uri))
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                startActivity(intent)
+                FreeformDock.startFullscreen(this, intent)
                 return
             } catch (_: Exception) { /* 폴백으로 */ }
         }
@@ -559,7 +559,7 @@ class MainActivity : AppCompatActivity() {
         val pkg = AppCatalog.packageFallback[entry.key]
         if (pkg != null) {
             val launch = packageManager.getLaunchIntentForPackage(pkg)
-            if (launch != null) { startActivity(launch); return }
+            if (launch != null) { FreeformDock.startFullscreen(this, launch); return }
             // 미설치 → 플레이스토어로
             try {
                 startActivity(Intent(Intent.ACTION_VIEW,
@@ -797,7 +797,7 @@ class MainActivity : AppCompatActivity() {
         val openCurrent = android.view.View.OnClickListener {
             val ctrl = activeController
             if (ctrl != null) {
-                packageManager.getLaunchIntentForPackage(ctrl.packageName)?.let { startActivity(it) }
+                packageManager.getLaunchIntentForPackage(ctrl.packageName)?.let { FreeformDock.startFullscreen(this, it) }
             } else {
                 openMusicApp()
             }
@@ -878,7 +878,7 @@ class MainActivity : AppCompatActivity() {
         val pkg = settings.musicPackage
         if (pkg.isNotEmpty()) {
             val intent = packageManager.getLaunchIntentForPackage(pkg)
-            if (intent != null) { startActivity(intent); return }
+            if (intent != null) { FreeformDock.startFullscreen(this, intent); return }
         }
         Toast.makeText(this, "설정에서 음악 앱을 지정하세요", Toast.LENGTH_SHORT).show()
     }

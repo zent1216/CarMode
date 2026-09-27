@@ -31,6 +31,22 @@ object FreeformDock {
         return if (pm.getLaunchIntentForPackage(DEFAULT_MAP_PKG) != null) DEFAULT_MAP_PKG else null
     }
 
+    private const val WINDOWING_MODE_FULLSCREEN = 1
+
+    /**
+     * 일반 앱을 전체 화면으로 연다.
+     * 자유 창이 하나라도 떠 있으면 이 롬은 새로 여는 앱도 자유 창으로 띄우므로 모드를 명시한다.
+     */
+    fun startFullscreen(ctx: Context, intent: android.content.Intent) {
+        val opts = ActivityOptions.makeBasic()
+        try {
+            org.lsposed.hiddenapibypass.HiddenApiBypass.invoke(
+                ActivityOptions::class.java, opts, "setLaunchWindowingMode", WINDOWING_MODE_FULLSCREEN)
+        } catch (_: Throwable) {}
+        if (ctx !is Activity) intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+        ctx.startActivity(intent, opts.toBundle())
+    }
+
     /** 뷰의 화면상 영역 */
     fun boundsOf(v: View): Rect? {
         if (v.width <= 0 || v.height <= 0) return null
