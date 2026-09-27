@@ -85,9 +85,23 @@ class Theme2Activity : AppCompatActivity() {
         // 테마2에는 편집 버튼이 없다. 타일을 길게 누르면 편집(삭제) 모드로 전환된다.
     }
 
+    // 편집 모드: 타일 길게 눌러 진입, 타일 영역 바깥 터치로 종료
+    private val editHelper by lazy { EditModeHelper(this) }
+
     private fun toggleEdit() {
         editing = !editing
+        editHelper.showHint(editing, b.t2Grid)
         renderTiles()
+    }
+
+    override fun dispatchTouchEvent(ev: android.view.MotionEvent): Boolean {
+        if (editHelper.handleTouch(ev, editing, b.t2Grid) { toggleEdit() }) return true
+        return super.dispatchTouchEvent(ev)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        if (editing) toggleEdit()  // 다른 화면으로 가면 편집 종료
     }
 
     override fun onResume() {
@@ -168,21 +182,57 @@ class Theme2Activity : AppCompatActivity() {
         try {
             val fused = LocationServices.getFusedLocationProviderClient(this)
             fused.lastLocation.addOnSuccessListener { loc ->
-                if (loc != null) loadWeather(loc.latitude, loc.longitude, "현재 위치")
+                if (loc != null) ui.launch {
+                    loadWeather(loc.latitude, loc.longitude, placeName(loc.latitude, loc.longitude))
+                }
                 else loadWeather(37.5665, 126.9780, "서울")
             }.addOnFailureListener { loadWeather(37.5665, 126.9780, "서울") }
         } catch (e: SecurityException) { loadWeather(37.5665, 126.9780, "서울") }
     }
 
+    /** GPS 좌표 → 동/구 이름 */
+    @Suppress("DEPRECATION")
+    private suspend fun placeName(lat: Double, lon: Double): String =
+        kotlinx.coroutines.withContext(Dispatchers.IO) {
+            try {
+                val a = android.location.Geocoder(this@Theme2Activity, Locale.KOREA)
+                    .getFromLocation(lat, lon, 1)?.firstOrNull()
+                listOfNotNull(a?.subLocality, a?.locality, a?.subAdminArea, a?.adminArea)
+                    .firstOrNull() ?: "현재 위치"
+            } catch (e: Exception) { "현재 위치" }
+        }
+
+    /** 날씨 카드: 현재 / 내일 / 모레 3칸 */
     private fun loadWeather(lat: Double, lon: Double, label: String) {
         b.t2WxLoc.text = label
         ui.launch {
-            val w = WeatherApi.fetch(lat, lon) ?: run { b.t2WxDesc.text = "날씨 불러오기 실패"; return@launch }
-            val (icon, desc) = WeatherApi.describe(w.code)
-            b.t2WxIcon.text = icon
-            b.t2WxTemp.text = "${w.temp}°"
-            b.t2WxDesc.text = "$desc · 체감 ${w.feels}°"
+            val w = WeatherApi.fetch(lat, lon)
+            val days = WeatherApi.fetchWeekly(lat, lon)
+            if (w == null && days.isEmpty()) { b.t2WxLoc.text = "$label · 날씨 불러오기 실패"; return@launch }
+            b.t2WxDays.removeAllViews()
+            // 현재
+            addDayCol("현재",
+                WeatherApi.describe(w?.code ?: days.getOrNull(0)?.code ?: 0).first,
+                w?.let { "${it.temp}°" } ?: "--°",
+                days.getOrNull(0)?.rainProb ?: w?.rainProb)
+            // 내일, 모레
+            listOf(1 to "내일", 2 to "모레").forEach { (i, name) ->
+                val d = days.getOrNull(i)
+                addDayCol(name,
+                    d?.let { WeatherApi.describe(it.code).first } ?: "—",
+                    d?.let { "${it.tMax}°/${it.tMin}°" } ?: "--°",
+                    d?.rainProb)
+            }
         }
+    }
+
+    private fun addDayCol(label: String, icon: String, temp: String, rain: Int?) {
+        val col = LayoutInflater.from(this).inflate(R.layout.wx_day_col, b.t2WxDays, false)
+        col.findViewById<TextView>(R.id.dayLabel).text = label
+        col.findViewById<TextView>(R.id.dayIcon).text = icon
+        col.findViewById<TextView>(R.id.dayTemp).text = temp
+        col.findViewById<TextView>(R.id.dayRain).text = "💧${rain ?: "--"}%"
+        b.t2WxDays.addView(col)
     }
 
     // ───────────────────── 퀵실행 타일 ─────────────────────
@@ -197,7 +247,8 @@ class Theme2Activity : AppCompatActivity() {
             val cell = gw / cols                              // 한 칸 너비(정사각형 기준)
             if (cell <= 0) return@post
             // 세로 공간을 채우도록 줄 수 결정(칸이 정사각형에 가깝게, 화면 클수록 줄 증가)
-            val rows = Math.round(gh.toFloat() / cell).coerceIn(1, Settings.MAX_ROWS)
+            // 내림: 정사각형 칸이 온전히 들어가는 줄 수만 사용(반올림하면 칸이 납작해져 아이콘이 잘림)
+            val rows = (gh / cell).coerceIn(1, Settings.MAX_ROWS)
             val n = cols * rows
             slots = settings.getSlots(n)
             grid.removeAllViews()
@@ -293,11 +344,24 @@ class Theme2Activity : AppCompatActivity() {
             container.addView(row)
         }
         dialog.show()
-        dialog.window?.setLayout(resources.displayMetrics.widthPixels * 2 / 3,
-            WindowManager.LayoutParams.WRAP_CONTENT)
+        // 지도 카드엔 지도앱 자유 창이 떠 있어 다이얼로그를 가리므로, 카드와 안 겹치는 오른쪽에 띄운다
+        val loc = IntArray(2); b.t2MapCard.getLocationOnScreen(loc)
+        val cardRight = loc[0] + b.t2MapCard.width
+        val w = (resources.displayMetrics.widthPixels - cardRight - dp(8)).coerceAtLeast(dp(280))
+        dialog.window?.apply {
+            setGravity(android.view.Gravity.END or android.view.Gravity.CENTER_VERTICAL)
+            setBackgroundDrawableResource(R.color.bg)  // 제목/버튼 줄도 배경을 채워 뒤 화면과 안 겹치게
+            setLayout(w, (resources.displayMetrics.heightPixels * 0.92).toInt())
+        }
     }
 
     private fun launchApp(entry: AppEntry) {
+        // 지도앱은 전체화면으로 열면 자유 창으로 되돌릴 수 없으므로 지도 카드에 붙인다
+        if (entry.packageName.isNotEmpty() &&
+            entry.packageName == FreeformDock.mapPackage(this, settings) &&
+            FreeformDock.isEnabled(this)) {
+            dockMap(); return
+        }
         if (entry.packageName.isNotEmpty()) {
             packageManager.getLaunchIntentForPackage(entry.packageName)?.let { startActivity(it); return }
             Toast.makeText(this, "${entry.name} 앱을 열 수 없습니다", Toast.LENGTH_SHORT).show(); return

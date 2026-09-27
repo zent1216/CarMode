@@ -133,54 +133,30 @@
                 android:text="설정" />
         </LinearLayout>
 
-        <!-- 날씨 카드 (약간 작게) -->
+        <!-- 날씨 카드: 위치 + 현재/내일/모레 3칸 (칸은 코드에서 채움) -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
             android:background="@drawable/panel_bg"
-            android:padding="12dp"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical">
-
-                <TextView
-                    android:id="@+id/t2WxLoc"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="위치 확인 중…"
-                    android:textColor="@color/text_dim"
-                    android:textSize="12sp" />
-
-                <TextView
-                    android:id="@+id/t2WxTemp"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="--°"
-                    android:textColor="@color/text"
-                    android:textSize="30sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/t2WxDesc"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="—"
-                    android:textColor="@color/text_dim"
-                    android:textSize="12sp" />
-            </LinearLayout>
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="10dp"
+            android:orientation="vertical">
 
             <TextView
-                android:id="@+id/t2WxIcon"
+                android:id="@+id/t2WxLoc"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="☁️"
-                android:textSize="34sp" />
+                android:text="위치 확인 중…"
+                android:textColor="@color/text_dim"
+                android:textSize="12sp" />
+
+            <LinearLayout
+                android:id="@+id/t2WxDays"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:orientation="horizontal" />
         </LinearLayout>
 
         <!-- 퀵실행: 아이콘 타일. 남는 세로 공간을 채우고, 줄 수는 해상도에 맞춰 코드에서 자동 결정 -->

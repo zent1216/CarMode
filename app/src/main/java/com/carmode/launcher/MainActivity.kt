@@ -126,7 +126,6 @@ class MainActivity : AppCompatActivity() {
 
     // ───────────────────── 상단 버튼 ─────────────────────
     private fun setupTopButtons() {
-        b.btnEdit.setOnClickListener { toggleEdit() }
         b.btnSettings.setOnClickListener {
             startActivity(Intent(this, SettingsActivity::class.java))
         }
@@ -135,16 +134,23 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // 편집 모드: 타일 길게 눌러 진입, 타일 영역 바깥 터치로 종료
+    private val editHelper by lazy { EditModeHelper(this) }
+
     private fun toggleEdit() {
         editing = !editing
-        b.btnEdit.text = if (editing) "완료" else "편집"
-        b.btnEdit.setBackgroundResource(
-            if (editing) R.drawable.topbtn_bg_on else R.drawable.topbtn_bg
-        )
-        b.btnEdit.setTextColor(
-            ContextCompat.getColor(this, if (editing) R.color.bg else R.color.text_dim)
-        )
+        editHelper.showHint(editing, b.tileGrid)
         renderTiles()
+    }
+
+    override fun dispatchTouchEvent(ev: android.view.MotionEvent): Boolean {
+        if (editHelper.handleTouch(ev, editing, b.tileGrid) { toggleEdit() }) return true
+        return super.dispatchTouchEvent(ev)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        if (editing) toggleEdit()  // 다른 화면으로 가면 편집 종료
     }
 
     private fun applyScreenFlags() {

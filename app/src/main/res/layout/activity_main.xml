@@ -88,12 +88,6 @@
                 android:id="@+id/btnSettings"
                 style="@style/TopButton"
                 android:text="설정" />
-
-            <TextView
-                android:id="@+id/btnEdit"
-                style="@style/TopButton"
-                android:layout_marginStart="10dp"
-                android:text="편집" />
         </LinearLayout>
     </RelativeLayout>
 

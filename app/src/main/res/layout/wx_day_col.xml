@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 테마2 날씨 카드의 한 칸 (현재/내일/모레) -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="0dp"
+    android:layout_height="wrap_content"
+    android:layout_weight="1"
+    android:orientation="vertical"
+    android:gravity="center_horizontal">
+
+    <TextView
+        android:id="@+id/dayLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="현재"
+        android:textColor="@color/text_dim"
+        android:textSize="12sp" />
+
+    <TextView
+        android:id="@+id/dayIcon"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="☁️"
+        android:textSize="24sp" />
+
+    <TextView
+        android:id="@+id/dayTemp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="--°"
+        android:textColor="@color/text"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:maxLines="1" />
+
+    <TextView
+        android:id="@+id/dayRain"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="💧--%"
+        android:textColor="@color/text_dim"
+        android:textSize="11sp" />
+</LinearLayout>
