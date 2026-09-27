@@ -31,13 +31,23 @@ object FreeformDock {
         return if (pm.getLaunchIntentForPackage(DEFAULT_MAP_PKG) != null) DEFAULT_MAP_PKG else null
     }
 
+    /** 뷰의 화면상 영역 */
+    fun boundsOf(v: View): Rect? {
+        if (v.width <= 0 || v.height <= 0) return null
+        val loc = IntArray(2)
+        v.getLocationOnScreen(loc)
+        return Rect(loc[0], loc[1], loc[0] + v.width, loc[1] + v.height)
+    }
+
     /** 카드 뷰의 화면상 영역에 지도앱 창을 띄운다(이미 실행 중이면 재시작 없이 앞으로). */
     fun dock(activity: Activity, pkg: String, card: View): Boolean {
+        val bounds = boundsOf(card) ?: return false
+        return dockTo(activity, pkg, bounds)
+    }
+
+    /** 지도앱 창을 지정 영역에 띄운다(자유 창 유지 — 크게 보기/카드 복귀 모두 이걸로). */
+    fun dockTo(activity: Activity, pkg: String, bounds: Rect): Boolean {
         val intent = activity.packageManager.getLaunchIntentForPackage(pkg) ?: return false
-        val loc = IntArray(2)
-        card.getLocationOnScreen(loc)
-        if (card.width <= 0 || card.height <= 0) return false
-        val bounds = Rect(loc[0], loc[1], loc[0] + card.width, loc[1] + card.height)
         val opts = ActivityOptions.makeBasic().setLaunchBounds(bounds)
         // 창 위치만으론 전체화면으로 뜨는 롬이 있어, 자유 창 모드(5)를 명시한다(숨김 API).
         try {

@@ -50,6 +50,7 @@ class Theme2Activity : AppCompatActivity() {
     private var activeController: MediaController? = null
 
     private var editing = false
+    private var skipNextDock = false  // 지도앱 '크게 보기' 직후 카드 복귀 1회 건너뛰기
     private var slots = mutableListOf<String>()
 
 
@@ -114,7 +115,9 @@ class Theme2Activity : AppCompatActivity() {
         renderTiles()
         refreshStatusIcons()
         refreshWeather()
-        // 홈 복귀 시 자유 창이 숨겨지므로 카드 크기가 정해진 뒤 지도앱을 다시 붙인다
+        // 홈 복귀 시 자유 창이 숨겨지므로 카드 크기가 정해진 뒤 지도앱을 다시 붙인다.
+        // 단, '크게 보기' 직후 중간 화면이 닫히며 돌아온 경우는 건너뛴다(다음 홈 버튼부터 카드 복귀).
+        if (skipNextDock) { skipNextDock = false; return }
         b.t2MapCard.post { dockMap() }
     }
 
@@ -356,11 +359,19 @@ class Theme2Activity : AppCompatActivity() {
     }
 
     private fun launchApp(entry: AppEntry) {
-        // 지도앱은 전체화면으로 열면 자유 창으로 되돌릴 수 없으므로 지도 카드에 붙인다
+        // 지도앱 타일: 자유 창을 유지한 채 화면 전체 크기로 키움(홈으로 오면 onResume 에서 카드로 복귀).
+        // 전체화면 모드로 열면 자유 창으로 되돌릴 수 없어서 이렇게 한다.
         if (entry.packageName.isNotEmpty() &&
             entry.packageName == FreeformDock.mapPackage(this, settings) &&
             FreeformDock.isEnabled(this)) {
-            dockMap(); return
+            FreeformDock.boundsOf(b.root)?.let {
+                skipNextDock = true
+                startActivity(Intent(this, MapMaximizeActivity::class.java)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION)
+                    .putExtra(MapMaximizeActivity.EXTRA_PKG, entry.packageName)
+                    .putExtra(MapMaximizeActivity.EXTRA_BOUNDS, it))
+            }
+            return
         }
         if (entry.packageName.isNotEmpty()) {
             packageManager.getLaunchIntentForPackage(entry.packageName)?.let { startActivity(it); return }

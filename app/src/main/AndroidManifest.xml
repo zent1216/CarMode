@@ -98,6 +98,15 @@
             android:screenOrientation="sensorLandscape"
             android:theme="@style/Theme.CarMode" />
 
+        <!-- 테마2: 지도앱 크게 보기용 중간 화면(잠깐 떴다 바로 닫힘) -->
+        <activity
+            android:name=".MapMaximizeActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:taskAffinity=".maximize"
+            android:theme="@style/Theme.CarMode" />
+
         <!-- 테마2: 지도 임베드 홈 -->
         <activity
             android:name=".Theme2Activity"
