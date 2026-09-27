@@ -177,6 +177,8 @@ class SettingsActivity : AppCompatActivity() {
         b.btnTheme1.setTextColor(ContextCompat.getColor(this, if (!t2) R.color.bg else R.color.text_dim))
         b.btnTheme2.setBackgroundResource(if (t2) R.drawable.topbtn_bg_on else R.drawable.topbtn_bg)
         b.btnTheme2.setTextColor(ContextCompat.getColor(this, if (t2) R.color.bg else R.color.text_dim))
+        // 세로 칸 수는 테마1 전용(테마2는 남는 공간에 맞춰 자동 결정)
+        b.rowTileRows.visibility = if (t2) android.view.View.GONE else android.view.View.VISIBLE
     }
 
     private fun refreshMapAppSub() {

@@ -375,8 +375,9 @@
                     android:text="+" />
             </LinearLayout>
 
-            <!-- 타일 세로 칸 -->
+            <!-- 타일 세로 칸 (테마1 전용 — 테마2는 남는 공간에 맞춰 자동) -->
             <LinearLayout
+                android:id="@+id/rowTileRows"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@drawable/panel_bg"
@@ -403,7 +404,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="3dp"
-                        android:text="세로 줄 수 (최대 4)"
+                        android:text="세로 줄 수 (최대 4) · 테마1 전용"
                         android:textColor="@color/text_dim"
                         android:textSize="12sp" />
                 </LinearLayout>
