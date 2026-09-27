@@ -15,6 +15,8 @@
 
     <!-- 앱 내 업데이트 설치 -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <!-- 모든 앱: 길게 눌러 앱 삭제 -->
+    <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
 
     <!-- 다른 앱 실행 가능 여부 조회 (Android 11+ 패키지 가시성) -->
     <queries>
