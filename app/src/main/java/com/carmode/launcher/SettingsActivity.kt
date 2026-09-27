@@ -214,45 +214,29 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     private fun refreshPrivStatus() {
-        val (txt, colorRes) = when (PrivShell.mode()) {
-            PrivShell.MODE_ROOT -> "루트 사용 가능 ✓" to R.color.teal
-            PrivShell.MODE_SHIZUKU -> "Shizuku 연결됨 ✓" to R.color.teal
-            else -> "미설정 — 지도 임베드에 루트 또는 Shizuku 필요" to R.color.danger
-        }
-        b.tvPrivStatus.text = txt
-        b.tvPrivStatus.setTextColor(ContextCompat.getColor(this, colorRes))
+        val on = FreeformDock.isEnabled(this)
+        b.tvPrivStatus.text = if (on) "켜짐 ✓ — 지도앱을 카드 안 창으로 띄웁니다"
+                              else "꺼짐 — 지도 카드를 쓰려면 켜야 합니다"
+        b.tvPrivStatus.setTextColor(ContextCompat.getColor(this, if (on) R.color.teal else R.color.danger))
     }
 
     private fun showPrivDialog() {
-        val alive = PrivShell.shizukuAlive()
-        val granted = PrivShell.shizukuGranted()
-        val msg = when {
-            PrivShell.hasRoot() -> "루트가 감지되었습니다. 별도 설정 없이 지도 임베드를 사용할 수 있습니다."
-            granted -> "Shizuku 권한이 이미 허용되어 있습니다."
-            alive -> "Shizuku 가 실행 중입니다. 이 앱에 권한을 허용하세요."
-            else ->
-                "지도를 화면 안에서 구동하려면 루트 또는 Shizuku 가 필요합니다.\n\n" +
-                "[Shizuku 설치·실행 방법]\n" +
-                "1) Play스토어에서 'Shizuku' 설치\n" +
-                "2) 개발자 옵션 → 무선 디버깅 켜기\n" +
-                "3) Shizuku 앱에서 '무선 디버깅으로 시작' → 페어링\n" +
-                "4) 이 화면으로 돌아와 '권한 요청'\n\n" +
-                "* 루팅 불필요, PC 불필요. 폰 재부팅 시 Shizuku 재시작 필요."
-        }
+        val msg = if (FreeformDock.isEnabled(this))
+            "자유 창이 켜져 있습니다. 테마2에서 지도앱이 왼쪽 카드 크기의 창으로 뜹니다."
+        else
+            "테마2 지도 카드는 지도앱을 '자유 창'으로 띄워 카드 위치에 붙입니다.\n" +
+            "루트·Shizuku 없이 동작하지만 자유 창을 한 번 켜야 합니다.\n\n" +
+            "[켜는 방법]\n" +
+            "1) 개발자 옵션 → '자유 형식 창 사용'(Enable freeform windows) 켜기\n" +
+            "   또는 PC에서: adb shell settings put global enable_freeform_support 1\n" +
+            "2) 폰 재부팅\n\n" +
+            "* 한 번 켜면 재부팅해도 유지됩니다."
         val builder = AlertDialog.Builder(this, R.style.Theme_CarMode_Dialog)
-            .setTitle("지도 임베드 권한").setMessage(msg).setNegativeButton("닫기", null)
-        if (alive && !granted) {
-            builder.setPositiveButton("권한 요청") { _, _ ->
-                try {
-                    rikka.shizuku.Shizuku.addRequestPermissionResultListener(
-                        object : rikka.shizuku.Shizuku.OnRequestPermissionResultListener {
-                            override fun onRequestPermissionResult(requestCode: Int, grantResult: Int) {
-                                rikka.shizuku.Shizuku.removeRequestPermissionResultListener(this)
-                                refreshPrivStatus()
-                            }
-                        })
-                    rikka.shizuku.Shizuku.requestPermission(1001)
-                } catch (e: Throwable) { toast("Shizuku 권한 요청 실패") }
+            .setTitle("자유 창").setMessage(msg).setNegativeButton("닫기", null)
+        if (!FreeformDock.isEnabled(this)) {
+            builder.setPositiveButton("개발자 옵션 열기") { _, _ ->
+                try { startActivity(Intent(AndroidSettings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS)) }
+                catch (_: Exception) {}
             }
         }
         builder.show()

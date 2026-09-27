@@ -178,7 +178,7 @@
                     android:text="선택" />
             </LinearLayout>
 
-            <!-- 테마2: 지도 임베드 권한 (루트/Shizuku) -->
+            <!-- 테마2: 자유 창 상태 (지도앱을 카드 위치 창으로 띄우는 데 필요) -->
             <LinearLayout
                 android:id="@+id/rowPrivSetup"
                 android:layout_width="match_parent"
@@ -200,7 +200,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="지도 임베드 권한"
+                        android:text="자유 창 (지도 카드용)"
                         android:textColor="@color/text"
                         android:textSize="15sp"
                         android:textStyle="bold" />
@@ -218,7 +218,7 @@
                 <TextView
                     android:id="@+id/btnPrivSetup"
                     style="@style/TopButton"
-                    android:text="설정" />
+                    android:text="안내" />
             </LinearLayout>
 
             <!-- ── 디스플레이 ── -->

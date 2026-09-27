@@ -59,11 +59,6 @@ class Settings(context: Context) {
         get() = prefs.getString("mapPkg", "") ?: ""
         set(v) = prefs.edit().putString("mapPkg", v).apply()
 
-    // ── 테마2 지도 자동 임베드(앱 켜질 때 자동 실행) ──
-    var mapAutoStart: Boolean
-        get() = prefs.getBoolean("mapAutoStart", true)
-        set(v) = prefs.edit().putBoolean("mapAutoStart", v).apply()
-
     // ── 날씨 표시 항목 선택 ──
     var wxItems: Set<String>
         get() {

@@ -29,14 +29,6 @@ import androidx.core.content.ContextCompat
 import androidx.gridlayout.widget.GridLayout
 import com.carmode.launcher.databinding.ActivityTheme2Binding
 import com.google.android.gms.location.LocationServices
-import com.kakao.vectormap.KakaoMap
-import com.kakao.vectormap.KakaoMapReadyCallback
-import com.kakao.vectormap.MapLifeCycleCallback
-import com.kakao.vectormap.LatLng
-import com.kakao.vectormap.camera.CameraUpdateFactory
-import com.kakao.vectormap.label.LabelOptions
-import com.kakao.vectormap.label.LabelStyle
-import com.kakao.vectormap.label.LabelStyles
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -45,8 +37,8 @@ import java.util.Calendar
 import java.util.Locale
 
 /**
- * 테마2 — 좌측 카드(날씨·시계·퀵실행·음악) + 우측 지도 임베드.
- * 지도 카드는 MapEmbedder 로 지정 지도앱을 화면 안에서 실제 구동한다.
+ * 테마2 — 좌측 지도 카드 + 우측(상단바·날씨·퀵실행·음악).
+ * 지도 카드는 지도앱(기본 티맵)을 자유 창으로 띄워 카드 위치에 붙인다(FreeformDock).
  */
 class Theme2Activity : AppCompatActivity() {
 
@@ -60,8 +52,6 @@ class Theme2Activity : AppCompatActivity() {
     private var editing = false
     private var slots = mutableListOf<String>()
 
-    private var kakaoMap: KakaoMap? = null
-    private var myLocationLabel: com.kakao.vectormap.label.Label? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -110,12 +100,8 @@ class Theme2Activity : AppCompatActivity() {
         renderTiles()
         refreshStatusIcons()
         refreshWeather()
-        try { b.t2KakaoMap.resume() } catch (_: Throwable) {}
-    }
-
-    override fun onPause() {
-        super.onPause()
-        try { b.t2KakaoMap.pause() } catch (_: Throwable) {}
+        // 홈 복귀 시 자유 창이 숨겨지므로 카드 크기가 정해진 뒤 지도앱을 다시 붙인다
+        b.t2MapCard.post { dockMap() }
     }
 
     // ───────────────────── 상태 토글 ─────────────────────
@@ -331,54 +317,25 @@ class Theme2Activity : AppCompatActivity() {
         Toast.makeText(this, "${entry.name} 앱을 열 수 없습니다", Toast.LENGTH_SHORT).show()
     }
 
-    // ───────────────────── 카카오맵 (카드 안 지도) ─────────────────────
+    // ───────────────────── 지도 카드 (지도앱 자유 창) ─────────────────────
     private fun setupMap() {
-        b.t2KakaoMap.start(object : MapLifeCycleCallback() {
-            override fun onMapDestroy() { kakaoMap = null }
-            override fun onMapError(error: Exception?) {
-                b.t2MapHint.visibility = View.VISIBLE
-                b.t2MapHintText.text = "지도 오류: ${error?.message ?: "알 수 없음"}"
-            }
-        }, object : KakaoMapReadyCallback() {
-            override fun onMapReady(map: KakaoMap) {
-                kakaoMap = map
-                b.t2MapHint.visibility = View.GONE
-                showMyLocation()
-            }
-        })
+        b.t2MapCard.setOnClickListener { dockMap() }
+        b.t2MapReload.setOnClickListener { dockMap() }
     }
 
-    /** 현재 위치로 카메라 이동 + 위치 마커 표시 */
-    private fun showMyLocation() {
-        val map = kakaoMap ?: return
-        val fallback = LatLng.from(37.5665, 126.9780) // 서울
-        fun place(pos: LatLng) {
-            try {
-                map.moveCamera(CameraUpdateFactory.newCenterPosition(pos, 15))
-                val lm = map.labelManager ?: return
-                if (myLocationLabel == null) {
-                    val styles = lm.addLabelStyles(
-                        LabelStyles.from(LabelStyle.from(R.drawable.ic_my_location))
-                    )
-                    myLocationLabel = lm.layer?.addLabel(
-                        LabelOptions.from(pos).setStyles(styles)
-                    )
-                } else {
-                    myLocationLabel?.moveTo(pos)
-                }
-            } catch (_: Throwable) {}
+    private fun dockMap() {
+        if (!FreeformDock.isEnabled(this)) {
+            b.t2MapHintText.text = "자유 창이 꺼져 있습니다\n설정 → 테마 → 자유 창에서 켜는 방법을 확인하세요"
+            return
         }
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-            == PackageManager.PERMISSION_GRANTED) {
-            try {
-                LocationServices.getFusedLocationProviderClient(this).lastLocation
-                    .addOnSuccessListener { loc ->
-                        place(if (loc != null) LatLng.from(loc.latitude, loc.longitude) else fallback)
-                    }
-                    .addOnFailureListener { place(fallback) }
-            } catch (e: SecurityException) { place(fallback) }
-        } else {
-            place(fallback)
+        val pkg = FreeformDock.mapPackage(this, settings)
+        if (pkg == null) {
+            b.t2MapHintText.text = "지도앱이 없습니다\n설정 → 테마2 지도앱에서 선택하세요"
+            return
+        }
+        b.t2MapHintText.text = "지도를 불러오는 중…\n(탭하면 다시 띄움)"
+        if (!FreeformDock.dock(this, pkg, b.t2MapCard)) {
+            b.t2MapHintText.text = "지도앱을 띄우지 못했습니다\n탭해서 다시 시도"
         }
     }
 

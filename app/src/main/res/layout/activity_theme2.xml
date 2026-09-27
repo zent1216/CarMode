@@ -9,7 +9,9 @@
     android:baselineAligned="false">
 
     <!-- ───────── 좌측: 지도 카드 (크게) ───────── -->
+    <!-- 지도앱이 이 카드 영역에 '자유 창'으로 떠서 덮는다 -->
     <FrameLayout
+        android:id="@+id/t2MapCard"
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_weight="60"
@@ -17,13 +19,7 @@
         android:background="@drawable/panel_bg"
         android:clipToOutline="true">
 
-        <!-- 카카오맵 (카드 안에서 우리가 직접 렌더링) -->
-        <com.kakao.vectormap.MapView
-            android:id="@+id/t2KakaoMap"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />
-
-        <!-- 로딩/오류 안내 오버레이 -->
+        <!-- 지도앱이 안 떴을 때 보이는 안내 (탭하면 다시 띄움) -->
         <LinearLayout
             android:id="@+id/t2MapHint"
             android:layout_width="match_parent"
@@ -123,7 +119,6 @@
                 android:text="↻"
                 android:textColor="@color/text_dim"
                 android:textSize="18sp"
-                android:visibility="gone"
                 android:contentDescription="지도 재시작" />
 
             <TextView
