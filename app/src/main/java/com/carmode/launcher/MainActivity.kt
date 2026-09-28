@@ -30,6 +30,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.view.doOnNextLayout
 import androidx.gridlayout.widget.GridLayout
 import androidx.viewpager.widget.ViewPager
 import androidx.viewpager.widget.PagerAdapter
@@ -626,6 +627,7 @@ class MainActivity : AppCompatActivity() {
             override fun onPageSelected(position: Int) {
                 updateDots(position)
                 b.wxPager.requestLayout()  // 현재 페이지 높이에 맞춰 재측정
+                if (position == 0) spreadWeatherRows()  // 현재 날씨로 돌아오면 간격 다시 분배
             }
         })
     }
@@ -693,6 +695,31 @@ class MainActivity : AppCompatActivity() {
                 row.addView(cell)
             }
             container.addView(row)
+        }
+        spreadWeatherRows()
+    }
+
+    /**
+     * 화면이 세로로 길면 날씨 아래에 빈 공간이 몰리므로, 남는 높이를 날씨 행 사이 간격으로 고르게 나눈다.
+     * (헤더→1행, 행 사이, 마지막 행→페이지 점 = 행 수 + 1 개의 간격). 짧은 화면에선 남는 공간이 없어 그대로.
+     */
+    private fun spreadWeatherRows() {
+        val rows = (0 until wxGrid.childCount).map { wxGrid.getChildAt(it) }
+        if (rows.isEmpty()) return
+        // 1) 간격을 기본값으로 되돌려 실제 내용 높이를 잰다
+        rows.forEach { (it.layoutParams as ViewGroup.MarginLayoutParams).topMargin = 0; it.requestLayout() }
+        (b.wxDots.layoutParams as ViewGroup.MarginLayoutParams).topMargin = dp(8)
+        b.wxPager.requestLayout()
+        b.wxScroll.doOnNextLayout {
+            if (b.wxPager.currentItem != 0) return@doOnNextLayout   // 주간 페이지는 스크롤로 보면 됨
+            val content = b.wxScroll.getChildAt(0)?.height ?: return@doOnNextLayout
+            val extra = b.wxScroll.height - content
+            if (extra <= 0) return@doOnNextLayout
+            // 2) 남는 높이를 간격으로 분배
+            val gap = extra / (rows.size + 1)
+            rows.forEach { (it.layoutParams as ViewGroup.MarginLayoutParams).topMargin = gap; it.requestLayout() }
+            (b.wxDots.layoutParams as ViewGroup.MarginLayoutParams).topMargin = dp(8) + gap
+            b.wxPager.requestLayout()
         }
     }
 
