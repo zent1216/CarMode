@@ -69,6 +69,11 @@ class Theme2Activity : AppCompatActivity() {
         setupMusicControls()
         setupMap()
         b.t2Title.isSelected = true
+        b.t2WxRefresh.setOnClickListener { v ->
+            v.animate().rotationBy(360f).setDuration(500).start()
+            Toast.makeText(this, "날씨 새로고침", Toast.LENGTH_SHORT).show()
+            refreshWeather()
+        }
 
         startClock()
         startMediaPoll()
