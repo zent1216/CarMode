@@ -53,13 +53,26 @@ class SettingsActivity : AppCompatActivity() {
         refreshTileLabels()
         b.btnColsMinus.setOnClickListener { settings.tileCols -= 1; refreshTileLabels() }
         b.btnColsPlus.setOnClickListener  { settings.tileCols += 1; refreshTileLabels() }
-        b.btnRowsMinus.setOnClickListener { settings.tileRows -= 1; refreshTileLabels() }
-        b.btnRowsPlus.setOnClickListener  { settings.tileRows += 1; refreshTileLabels() }
+        // 세로 칸: 테마1은 1~4, 테마2는 자동(0)/1~4 — 값은 테마별로 따로 저장
+        b.btnRowsMinus.setOnClickListener {
+            if (settings.themeMode == 2) settings.t2Rows -= 1 else settings.tileRows -= 1
+            refreshTileLabels()
+        }
+        b.btnRowsPlus.setOnClickListener {
+            if (settings.themeMode == 2) settings.t2Rows += 1 else settings.tileRows += 1
+            refreshTileLabels()
+        }
     }
 
     private fun refreshTileLabels() {
         b.tvCols.text = settings.tileCols.toString()
-        b.tvRows.text = settings.tileRows.toString()
+        if (settings.themeMode == 2) {
+            b.tvRows.text = if (settings.t2Rows == 0) "자동" else settings.t2Rows.toString()
+            b.tvRowsSub.text = "세로 줄 수 (최대 4) · 자동은 남는 공간에 맞춤"
+        } else {
+            b.tvRows.text = settings.tileRows.toString()
+            b.tvRowsSub.text = "세로 줄 수 (최대 4)"
+        }
     }
 
     // ── 업데이트 확인 ──
@@ -177,8 +190,8 @@ class SettingsActivity : AppCompatActivity() {
         b.btnTheme1.setTextColor(ContextCompat.getColor(this, if (!t2) R.color.bg else R.color.text_dim))
         b.btnTheme2.setBackgroundResource(if (t2) R.drawable.topbtn_bg_on else R.drawable.topbtn_bg)
         b.btnTheme2.setTextColor(ContextCompat.getColor(this, if (t2) R.color.bg else R.color.text_dim))
-        // 세로 칸 수는 테마1 전용(테마2는 남는 공간에 맞춰 자동 결정)
-        b.rowTileRows.visibility = if (t2) android.view.View.GONE else android.view.View.VISIBLE
+        // 세로 칸 표시는 테마별 값으로 갱신(테마2는 자동/1~4)
+        refreshTileLabels()
     }
 
     private fun refreshMapAppSub() {

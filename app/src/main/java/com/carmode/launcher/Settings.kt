@@ -16,6 +16,11 @@ class Settings(context: Context) {
         get() = prefs.getInt("tileRows", 2).coerceIn(1, MAX_ROWS)
         set(v) = prefs.edit().putInt("tileRows", v.coerceIn(1, MAX_ROWS)).apply()
 
+    // 테마2 세로 칸: 0 = 자동(남는 공간에 맞춤), 1~4 = 고정
+    var t2Rows: Int
+        get() = prefs.getInt("t2Rows", 0).coerceIn(0, MAX_ROWS)
+        set(v) = prefs.edit().putInt("t2Rows", v.coerceIn(0, MAX_ROWS)).apply()
+
     val slotCount: Int get() = tileCols * tileRows
 
     // ── 타일 구성 (칸 수 = 가로×세로, 빈 칸은 빈 문자열) ──

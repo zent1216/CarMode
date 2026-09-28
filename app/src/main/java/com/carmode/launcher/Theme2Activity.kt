@@ -250,8 +250,9 @@ class Theme2Activity : AppCompatActivity() {
             val cell = gw / cols                              // 한 칸 너비(정사각형 기준)
             if (cell <= 0) return@post
             // 세로 공간을 채우도록 줄 수 결정(칸이 정사각형에 가깝게, 화면 클수록 줄 증가)
-            // 내림: 정사각형 칸이 온전히 들어가는 줄 수만 사용(반올림하면 칸이 납작해져 아이콘이 잘림)
-            val rows = (gh / cell).coerceIn(1, Settings.MAX_ROWS)
+            // 설정값 고정(1~4) 우선, 자동(0)이면 정사각형 칸이 온전히 들어가는 줄 수(내림)
+            val rows = if (settings.t2Rows > 0) settings.t2Rows
+                       else (gh / cell).coerceIn(1, Settings.MAX_ROWS)
             val n = cols * rows
             slots = settings.getSlots(n)
             grid.removeAllViews()
