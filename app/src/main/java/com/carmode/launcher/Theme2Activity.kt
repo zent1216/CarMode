@@ -80,6 +80,10 @@ class Theme2Activity : AppCompatActivity() {
         setupMusicControls()
         setupMap()
         b.t2Title.isSelected = true
+        // 날씨가 늦게 로드되며 카드가 커지면 퀵실행 공간이 줄어듦 → 크기가 바뀌면 다시 그려 아이콘 잘림 방지
+        b.t2Grid.addOnLayoutChangeListener { _, _, top, _, bottom, _, oldTop, _, oldBottom ->
+            if (bottom - top != oldBottom - oldTop && oldBottom - oldTop > 0) renderTiles()
+        }
         b.t2WxRefresh.setOnClickListener { v ->
             v.animate().rotationBy(360f).setDuration(500).start()
             Toast.makeText(this, "날씨 새로고침", Toast.LENGTH_SHORT).show()
@@ -270,6 +274,10 @@ class Theme2Activity : AppCompatActivity() {
             val rows = if (settings.t2Rows > 0) settings.t2Rows
                        else (gh / cell).coerceIn(1, Settings.MAX_ROWS)
             val n = cols * rows
+            // 칸이 납작해도 아이콘이 잘리지 않게: 칸의 짧은 변에 맞춰 아이콘 크기 결정(최대 78dp)
+            val cellW = gw / cols - dp(10)
+            val cellH = gh / rows - dp(10)
+            val iconPx = (minOf(cellW, cellH) - dp(12)).coerceIn(dp(20), dp(78))
             slots = settings.getSlots(n)
             grid.removeAllViews()
             grid.columnCount = cols
@@ -277,7 +285,7 @@ class Theme2Activity : AppCompatActivity() {
             for (i in 0 until n) {
                 val key = slots.getOrElse(i) { "" }
                 val entry = AppCatalog.byKey(key) ?: if (key.contains('.')) entryFromPackage(key) else null
-                val view = if (entry != null) buildTile(entry, i) else buildEmpty(i)
+                val view = if (entry != null) buildTile(entry, i, iconPx) else buildEmpty(i)
                 val lp = GridLayout.LayoutParams().apply {
                     width = 0; height = 0
                     columnSpec = GridLayout.spec(i % cols, 1f)   // 가로 균등 분할
@@ -297,10 +305,16 @@ class Theme2Activity : AppCompatActivity() {
         } catch (e: Exception) { null }
     }
 
-    private fun buildTile(entry: AppEntry, index: Int): View {
+    private fun buildTile(entry: AppEntry, index: Int, iconPx: Int): View {
         val v = LayoutInflater.from(this).inflate(R.layout.tile, b.t2Grid, false)
         val iconTv = v.findViewById<TextView>(R.id.tileIcon)
         val iconImg = v.findViewById<ImageView>(R.id.tileIconImage)
+        // 아이콘 틀(기본 78dp)을 칸 크기에 맞게 줄이고, 안쪽 여백도 줄여 잘림 방지
+        (iconImg.parent as? View)?.let { frame ->
+            frame.layoutParams = frame.layoutParams.apply { width = iconPx; height = iconPx }
+            (frame.parent as? View)?.setPadding(dp(6), dp(6), dp(6), dp(6))
+        }
+        iconTv.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, iconPx * 0.66f)
         if (entry.packageName.isNotEmpty()) {
             iconTv.visibility = View.GONE; iconImg.visibility = View.VISIBLE
             try { iconImg.setImageDrawable(packageManager.getApplicationIcon(entry.packageName)) }
