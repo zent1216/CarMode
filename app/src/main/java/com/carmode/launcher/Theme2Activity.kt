@@ -53,6 +53,17 @@ class Theme2Activity : AppCompatActivity() {
     private var skipNextDock = false  // 지도앱 '크게 보기' 직후 카드 복귀 1회 건너뛰기
     private var slots = mutableListOf<String>()
 
+    companion object {
+        /** 테마2 홈이 화면에 보이는 중인지(onStart~onStop). 접근성 감시(MapWatchService)가 참고 */
+        @Volatile var visible = false
+        /** 지도앱이 '크게 보기'(전체 크기) 상태인지. 카드로 붙이면 false */
+        @Volatile var mapMaximized = false
+        /** 크게 보기에 쓸 화면 영역(홈 화면 기준, 상태바·내비바 제외) */
+        @Volatile var fullBounds: android.graphics.Rect? = null
+    }
+
+    override fun onStart() { super.onStart(); visible = true }
+    override fun onStop() { super.onStop(); visible = false }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -372,6 +383,7 @@ class Theme2Activity : AppCompatActivity() {
             FreeformDock.isEnabled(this)) {
             FreeformDock.boundsOf(b.root)?.let {
                 skipNextDock = true
+                mapMaximized = true
                 startActivity(Intent(this, MapMaximizeActivity::class.java)
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION)
                     .putExtra(MapMaximizeActivity.EXTRA_PKG, entry.packageName)
@@ -415,7 +427,11 @@ class Theme2Activity : AppCompatActivity() {
             return
         }
         b.t2MapHintText.text = "지도를 불러오는 중…\n(탭하면 다시 띄움)"
-        if (!FreeformDock.dock(this, pkg, b.t2MapCard)) {
+        // 다른 앱 위에서 지도앱이 튀어나올 때 키울 전체 영역(상태바·내비바 제외)을 기억
+        FreeformDock.boundsOf(b.root)?.let { fullBounds = it }
+        if (FreeformDock.dock(this, pkg, b.t2MapCard)) {
+            mapMaximized = false
+        } else {
             b.t2MapHintText.text = "지도앱을 띄우지 못했습니다\n탭해서 다시 시도"
         }
     }

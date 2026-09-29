@@ -105,6 +105,20 @@
             android:screenOrientation="sensorLandscape"
             android:theme="@style/Theme.CarMode" />
 
+        <!-- 테마2: 다른 앱 위에서 지도앱이 튀어나오면 전체 크기로 키우는 접근성 서비스 -->
+        <service
+            android:name=".MapWatchService"
+            android:label="@string/map_watch_label"
+            android:exported="false"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/map_watch_service" />
+        </service>
+
         <!-- 테마2: 지도앱 크게 보기용 중간 화면(잠깐 떴다 바로 닫힘) -->
         <activity
             android:name=".MapMaximizeActivity"

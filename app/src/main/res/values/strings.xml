@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">차량 모드</string>
+    <string name="map_watch_desc">테마2에서 다른 앱을 쓰는 중에 지도앱(티맵 플로팅 TBT 등)이 앞으로 나오면 지도 창을 화면 전체 크기로 키웁니다. 화면 내용은 읽지 않고, 어떤 앱 창이 앞으로 나왔는지만 확인합니다.</string>
+    <string name="map_watch_label">CarMode 지도 창 보정</string>
 </resources>

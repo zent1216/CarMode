@@ -221,6 +221,49 @@
                     android:text="안내" />
             </LinearLayout>
 
+            <!-- 테마2: 다른 앱 위에서 지도앱이 튀어나올 때 전체 크기로 (접근성) -->
+            <LinearLayout
+                android:id="@+id/rowMapWatch"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/panel_bg"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="18dp"
+                android:layout_marginTop="8dp">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="지도 창 보정 (TBT 등)"
+                        android:textColor="@color/text"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvMapWatchStatus"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="3dp"
+                        android:text="확인 중…"
+                        android:textColor="@color/text_dim"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/btnMapWatch"
+                    style="@style/TopButton"
+                    android:text="설정" />
+            </LinearLayout>
+
             <!-- ── 디스플레이 ── -->
             <TextView
                 style="@style/SectionLabel"

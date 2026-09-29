@@ -182,6 +182,46 @@ class SettingsActivity : AppCompatActivity() {
         refreshPrivStatus()
         b.rowPrivSetup.setOnClickListener { showPrivDialog() }
         b.btnPrivSetup.setOnClickListener { showPrivDialog() }
+
+        refreshMapWatchStatus()
+        b.rowMapWatch.setOnClickListener { showMapWatchDialog() }
+        b.btnMapWatch.setOnClickListener { showMapWatchDialog() }
+    }
+
+    private fun isMapWatchOn(): Boolean {
+        val flat = AndroidSettings.Secure.getString(contentResolver,
+            AndroidSettings.Secure.ENABLED_ACCESSIBILITY_SERVICES) ?: return false
+        return flat.split(':').any { it.startsWith("$packageName/") && it.contains("MapWatchService") }
+    }
+
+    private fun refreshMapWatchStatus() {
+        val on = isMapWatchOn()
+        b.tvMapWatchStatus.text = if (on) "켜짐 ✓ — 다른 앱 위에서 지도가 뜨면 전체 크기로"
+                                  else "꺼짐 — TBT로 지도가 작게 뜨는 문제 보정"
+        b.tvMapWatchStatus.setTextColor(ContextCompat.getColor(this, if (on) R.color.teal else R.color.text_dim))
+    }
+
+    private fun showMapWatchDialog() {
+        val msg = if (isMapWatchOn())
+            "켜져 있습니다. 음악 등 다른 앱을 쓰다가 티맵 플로팅 TBT를 누르면 지도가 화면 전체 크기로 뜨고, 홈을 누르면 다시 카드로 돌아갑니다."
+        else
+            "다른 앱을 쓰다가 티맵 플로팅 TBT를 누르면 지도가 카드 크기로 작게 떠서 화면 일부만 가립니다.\n" +
+            "이 기능을 켜면 그때 지도를 화면 전체 크기로 키웁니다.\n\n" +
+            "[켜는 방법]\n접근성 → 설치된 앱 → 'CarMode 지도 창 보정' 켜기\n\n" +
+            "* 화면 내용은 읽지 않고, 어떤 앱 창이 앞으로 나왔는지만 확인합니다.\n" +
+            "* 켜기가 막혀 있으면: 앱 정보 → ⋮ → '제한된 설정 허용' 후 다시 시도"
+        val builder = AlertDialog.Builder(this, R.style.Theme_CarMode_Dialog)
+            .setTitle("지도 창 보정").setMessage(msg).setNegativeButton("닫기", null)
+            .setPositiveButton("접근성 설정 열기") { _, _ ->
+                try { startActivity(Intent(AndroidSettings.ACTION_ACCESSIBILITY_SETTINGS)) } catch (_: Exception) {}
+            }
+        if (!isMapWatchOn()) builder.setNeutralButton("앱 정보") { _, _ ->
+            try {
+                startActivity(Intent(AndroidSettings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                    android.net.Uri.parse("package:$packageName")))
+            } catch (_: Exception) {}
+        }
+        builder.show()
     }
 
     private fun refreshThemeButtons() {
@@ -520,6 +560,7 @@ class SettingsActivity : AppCompatActivity() {
         super.onResume()
         refreshNlsStatus()
         refreshPrivStatus()
+        refreshMapWatchStatus()  // 접근성 설정 다녀온 뒤 갱신
     }
 
     override fun onDestroy() {
