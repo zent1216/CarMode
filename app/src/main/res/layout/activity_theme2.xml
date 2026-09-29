@@ -9,15 +9,14 @@
     android:baselineAligned="false">
 
     <!-- ───────── 좌측: 지도 카드 (크게) ───────── -->
-    <!-- 지도앱이 이 카드 영역에 '자유 창'으로 떠서 덮는다 -->
+    <!-- 지도앱이 이 카드 영역에 '자유 창'으로 떠서 덮는다.
+         둥근 카드 배경은 두지 않음(창이 사라질 때 둥근 판이 드러나 보였음) -->
     <FrameLayout
         android:id="@+id/t2MapCard"
         android:layout_width="0dp"
         android:layout_height="match_parent"
-        android:layout_weight="60"
-        android:layout_marginEnd="12dp"
-        android:background="@drawable/panel_bg"
-        android:clipToOutline="true">
+        android:layout_weight="63"
+        android:layout_marginEnd="12dp">
 
         <!-- 지도앱이 안 떴을 때 보이는 안내 (탭하면 다시 띄움) -->
         <LinearLayout
@@ -51,7 +50,7 @@
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="match_parent"
-        android:layout_weight="40"
+        android:layout_weight="37"
         android:orientation="vertical">
 
         <!-- 상단 바: 작은 시계 · 상태아이콘 · 모든앱 · 설정 (편집 없음) -->
