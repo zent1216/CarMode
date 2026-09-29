@@ -32,6 +32,16 @@
         android:textStyle="bold"
         android:maxLines="1" />
 
+    <!-- 현재 칸: 오늘 최고/최저(작게). 내일·모레는 칸 높이 맞춤용으로 자리만 차지 -->
+    <TextView
+        android:id="@+id/dayRange"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="↑--° ↓--°"
+        android:textColor="@color/text_dim"
+        android:textSize="11sp"
+        android:maxLines="1" />
+
     <TextView
         android:id="@+id/dayRain"
         android:layout_width="wrap_content"

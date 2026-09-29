@@ -233,27 +233,34 @@ class Theme2Activity : AppCompatActivity() {
             val days = WeatherApi.fetchWeekly(lat, lon)
             if (w == null && days.isEmpty()) { b.t2WxLoc.text = "$label · 날씨 불러오기 실패"; return@launch }
             b.t2WxDays.removeAllViews()
-            // 현재
+            // 현재: 지금 기온 + 아래에 오늘 최고/최저
+            val today = days.getOrNull(0)
             addDayCol("현재",
-                WeatherApi.describe(w?.code ?: days.getOrNull(0)?.code ?: 0).first,
+                WeatherApi.describe(w?.code ?: today?.code ?: 0).first,
                 w?.let { "${it.temp}°" } ?: "--°",
-                days.getOrNull(0)?.rainProb ?: w?.rainProb)
-            // 내일, 모레
+                today?.let { "↑${it.tMax}° ↓${it.tMin}°" } ?: w?.let { "↑${it.tMax}° ↓${it.tMin}°" },
+                today?.rainProb ?: w?.rainProb)
+            // 내일, 모레: 최고/최저
             listOf(1 to "내일", 2 to "모레").forEach { (i, name) ->
                 val d = days.getOrNull(i)
                 addDayCol(name,
                     d?.let { WeatherApi.describe(it.code).first } ?: "—",
-                    d?.let { "${it.tMax}°/${it.tMin}°" } ?: "--°",
+                    d?.let { "↑${it.tMax}° ↓${it.tMin}°" } ?: "--°",
+                    null,
                     d?.rainProb)
             }
         }
     }
 
-    private fun addDayCol(label: String, icon: String, temp: String, rain: Int?) {
+    /** range 가 null 이면 작은 줄은 자리만 차지(세 칸 높이 맞춤) */
+    private fun addDayCol(label: String, icon: String, temp: String, range: String?, rain: Int?) {
         val col = LayoutInflater.from(this).inflate(R.layout.wx_day_col, b.t2WxDays, false)
         col.findViewById<TextView>(R.id.dayLabel).text = label
         col.findViewById<TextView>(R.id.dayIcon).text = icon
         col.findViewById<TextView>(R.id.dayTemp).text = temp
+        col.findViewById<TextView>(R.id.dayRange).apply {
+            if (range != null) text = range else visibility = View.INVISIBLE
+        }
         col.findViewById<TextView>(R.id.dayRain).text = "💧${rain ?: "--"}%"
         b.t2WxDays.addView(col)
     }
