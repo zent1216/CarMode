@@ -426,8 +426,8 @@ class Theme2Activity : AppCompatActivity() {
 
     // ───────────────────── 지도 카드 (지도앱 자유 창) ─────────────────────
     private fun setupMap() {
+        // 지도앱이 꺼져 있으면 빈 카드를 탭해 다시 띄움(홈 복귀 시엔 자동으로 다시 붙음)
         b.t2MapCard.setOnClickListener { dockMap() }
-        b.t2MapReload.setOnClickListener { dockMap() }
     }
 
     private fun dockMap() {

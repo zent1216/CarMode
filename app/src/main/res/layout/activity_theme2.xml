@@ -108,19 +108,6 @@
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="모바일 데이터" />
 
-            <!-- 지도 재시작 (임베드 중에만 표시, 지도 위를 안 가리게 상단바로 이동) -->
-            <TextView
-                android:id="@+id/t2MapReload"
-                android:layout_width="36dp"
-                android:layout_height="36dp"
-                android:layout_marginEnd="6dp"
-                android:gravity="center"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:text="↻"
-                android:textColor="@color/text_dim"
-                android:textSize="18sp"
-                android:contentDescription="지도 재시작" />
-
             <TextView
                 android:id="@+id/t2AllApps"
                 style="@style/TopButton"
