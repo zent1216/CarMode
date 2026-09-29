@@ -22,25 +22,21 @@
         android:text="☁️"
         android:textSize="24sp" />
 
+    <!-- 기온 한 줄: 현재는 '18° / ↑24° ↓13°', 내일·모레는 '↑23° ↓15°'. 칸이 좁으면 글자 자동 축소 -->
     <TextView
         android:id="@+id/dayTemp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:layout_height="22sp"
+        android:gravity="center"
         android:text="--°"
         android:textColor="@color/text"
         android:textSize="16sp"
         android:textStyle="bold"
-        android:maxLines="1" />
-
-    <!-- 현재 칸: 오늘 최고/최저(작게). 내일·모레는 칸 높이 맞춤용으로 자리만 차지 -->
-    <TextView
-        android:id="@+id/dayRange"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="↑--° ↓--°"
-        android:textColor="@color/text_dim"
-        android:textSize="11sp"
-        android:maxLines="1" />
+        android:maxLines="1"
+        android:autoSizeTextType="uniform"
+        android:autoSizeMinTextSize="10sp"
+        android:autoSizeMaxTextSize="16sp"
+        android:autoSizeStepGranularity="1sp" />
 
     <TextView
         android:id="@+id/dayRain"
