@@ -193,8 +193,9 @@
                             android:text="음악 앱을 실행하세요"
                             android:textColor="@color/text_dim"
                             android:textSize="13sp"
-                            android:maxLines="1"
-                            android:ellipsize="end" />
+                            android:singleLine="true"
+                            android:ellipsize="marquee"
+                            android:marqueeRepeatLimit="marquee_forever" />
                     </LinearLayout>
                 </LinearLayout>
 

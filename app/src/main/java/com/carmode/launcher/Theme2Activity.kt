@@ -80,6 +80,7 @@ class Theme2Activity : AppCompatActivity() {
         setupMusicControls()
         setupMap()
         b.t2Title.isSelected = true
+        b.t2Artist.isSelected = true  // 가수도 길면 흐름
         // 날씨가 늦게 로드되며 카드가 커지면 퀵실행 공간이 줄어듦 → 크기가 바뀌면 다시 그려 아이콘 잘림 방지
         b.t2Grid.addOnLayoutChangeListener { _, _, top, _, bottom, _, oldTop, _, oldBottom ->
             if (bottom - top != oldBottom - oldTop && oldBottom - oldTop > 0) renderTiles()
@@ -480,7 +481,7 @@ class Theme2Activity : AppCompatActivity() {
 
     private fun updateMusicWidget() {
         if (!isNlsGranted()) {
-            b.t2Title.text = "알림 접근 권한 필요"; b.t2Artist.text = "설정 → 음악"
+            b.t2Title.setIfChanged("알림 접근 권한 필요"); b.t2Artist.setIfChanged("설정 → 음악")
             b.t2Play.setImageResource(R.drawable.ic_play); b.t2Art.setImageDrawable(null); return
         }
         try {
@@ -490,20 +491,20 @@ class Theme2Activity : AppCompatActivity() {
                 ?: controllers.firstOrNull()
             activeController = ctrl
             if (ctrl == null) {
-                b.t2Title.text = "재생 중인 곡 없음"; b.t2Artist.text = "음악 앱을 실행하세요"
+                b.t2Title.setIfChanged("재생 중인 곡 없음"); b.t2Artist.setIfChanged("음악 앱을 실행하세요")
                 b.t2Art.setImageDrawable(null); b.t2Play.setImageResource(R.drawable.ic_play); return
             }
             val meta = ctrl.metadata; val state = ctrl.playbackState
-            b.t2Title.text = meta?.getString(MediaMetadata.METADATA_KEY_TITLE) ?: "제목 없음"
-            b.t2Artist.text = meta?.getString(MediaMetadata.METADATA_KEY_ARTIST)
-                ?: meta?.getString(MediaMetadata.METADATA_KEY_ALBUM_ARTIST) ?: ""
+            b.t2Title.setIfChanged(meta?.getString(MediaMetadata.METADATA_KEY_TITLE) ?: "제목 없음")
+            b.t2Artist.setIfChanged(meta?.getString(MediaMetadata.METADATA_KEY_ARTIST)
+                ?: meta?.getString(MediaMetadata.METADATA_KEY_ALBUM_ARTIST) ?: "")
             val art = meta?.getBitmap(MediaMetadata.METADATA_KEY_ART)
                 ?: meta?.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART)
             if (art != null) b.t2Art.setImageBitmap(art) else b.t2Art.setImageDrawable(null)
             b.t2Play.setImageResource(
                 if (state?.state == PlaybackState.STATE_PLAYING) R.drawable.ic_pause else R.drawable.ic_play)
         } catch (e: SecurityException) {
-            b.t2Title.text = "알림 접근 권한 필요"; b.t2Artist.text = "설정 → 음악"
+            b.t2Title.setIfChanged("알림 접근 권한 필요"); b.t2Artist.setIfChanged("설정 → 음악")
         }
     }
 

@@ -833,6 +833,7 @@ class MainActivity : AppCompatActivity() {
         b.plTitle.setOnClickListener(openCurrent)
         b.plArtist.setOnClickListener(openCurrent)
         b.plTitle.isSelected = true  // marquee 활성화
+        b.plArtist.isSelected = true  // 가수도 길면 흐름
     }
 
     private fun startMediaPoll() {
@@ -847,8 +848,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateMusicWidget() {
         if (!isNlsGranted()) {
-            b.plTitle.text = "알림 접근 권한 필요"
-            b.plArtist.text = "설정 → 음악 → 권한 허용"
+            b.plTitle.setIfChanged("알림 접근 권한 필요")
+            b.plArtist.setIfChanged("설정 → 음악 → 권한 허용")
             b.plPlay.setImageResource(R.drawable.ic_play)
             b.plArt.setImageDrawable(null)
             return
@@ -864,14 +865,14 @@ class MainActivity : AppCompatActivity() {
             activeController = ctrl
 
             if (ctrl == null) {
-                b.plTitle.text = "재생 중인 곡 없음"
+                b.plTitle.setIfChanged("재생 중인 곡 없음")
                 val pkg = settings.musicPackage
-                b.plArtist.text = if (pkg.isNotEmpty()) {
+                b.plArtist.setIfChanged(if (pkg.isNotEmpty()) {
                     try {
                         val info = packageManager.getApplicationInfo(pkg, 0)
                         "${packageManager.getApplicationLabel(info)} 열기"
                     } catch (e: Exception) { "음악 앱을 실행하세요" }
-                } else "음악 앱을 실행하세요"
+                } else "음악 앱을 실행하세요")
                 b.plArt.setImageDrawable(null)
                 b.plPlay.setImageResource(R.drawable.ic_play)
                 return
@@ -879,9 +880,9 @@ class MainActivity : AppCompatActivity() {
 
             val meta = ctrl.metadata
             val state = ctrl.playbackState
-            b.plTitle.text = meta?.getString(MediaMetadata.METADATA_KEY_TITLE) ?: "제목 없음"
-            b.plArtist.text = meta?.getString(MediaMetadata.METADATA_KEY_ARTIST)
-                ?: meta?.getString(MediaMetadata.METADATA_KEY_ALBUM_ARTIST) ?: ""
+            b.plTitle.setIfChanged(meta?.getString(MediaMetadata.METADATA_KEY_TITLE) ?: "제목 없음")
+            b.plArtist.setIfChanged(meta?.getString(MediaMetadata.METADATA_KEY_ARTIST)
+                ?: meta?.getString(MediaMetadata.METADATA_KEY_ALBUM_ARTIST) ?: "")
             val art = meta?.getBitmap(MediaMetadata.METADATA_KEY_ART)
                 ?: meta?.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART)
             if (art != null) b.plArt.setImageBitmap(art) else b.plArt.setImageDrawable(null)
@@ -889,8 +890,8 @@ class MainActivity : AppCompatActivity() {
             b.plPlay.setImageResource(if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play)
 
         } catch (e: SecurityException) {
-            b.plTitle.text = "알림 접근 권한 필요"
-            b.plArtist.text = "설정 → 음악 → 권한 허용"
+            b.plTitle.setIfChanged("알림 접근 권한 필요")
+            b.plArtist.setIfChanged("설정 → 음악 → 권한 허용")
             b.plPlay.setImageResource(R.drawable.ic_play)
         }
     }
