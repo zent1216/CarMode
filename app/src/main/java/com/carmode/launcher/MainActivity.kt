@@ -833,7 +833,6 @@ class MainActivity : AppCompatActivity() {
         b.plTitle.setOnClickListener(openCurrent)
         b.plArtist.setOnClickListener(openCurrent)
         b.plTitle.isSelected = true  // marquee 활성화
-        b.plArtist.isSelected = true  // 가수도 길면 흐름
     }
 
     private fun startMediaPoll() {

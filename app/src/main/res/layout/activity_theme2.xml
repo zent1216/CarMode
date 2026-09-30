@@ -226,8 +226,7 @@
                     android:textColor="@color/text_dim"
                     android:textSize="13sp"
                     android:singleLine="true"
-                    android:ellipsize="marquee"
-                    android:marqueeRepeatLimit="marquee_forever" />
+                    android:ellipsize="end" />
             </LinearLayout>
 
             <ImageView

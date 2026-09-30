@@ -80,7 +80,6 @@ class Theme2Activity : AppCompatActivity() {
         setupMusicControls()
         setupMap()
         b.t2Title.isSelected = true
-        b.t2Artist.isSelected = true  // 가수도 길면 흐름
         // 날씨가 늦게 로드되며 카드가 커지면 퀵실행 공간이 줄어듦 → 크기가 바뀌면 다시 그려 아이콘 잘림 방지
         b.t2Grid.addOnLayoutChangeListener { _, _, top, _, bottom, _, oldTop, _, oldBottom ->
             if (bottom - top != oldBottom - oldTop && oldBottom - oldTop > 0) renderTiles()
