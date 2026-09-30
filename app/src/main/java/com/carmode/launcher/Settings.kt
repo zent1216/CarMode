@@ -72,10 +72,9 @@ class Settings(context: Context) {
         }
         set(v) = prefs.edit().putString("wxItems", v.joinToString(",")).apply()
 
-    // ── 화면 항상 켜기 ──
-    var keepScreenOn: Boolean
-        get() = prefs.getBoolean("keepScreenOn", true)
-        set(v) = prefs.edit().putBoolean("keepScreenOn", v).apply()
+    // ── 화면 항상 켜기 ── 사용 안 함(설정 항목 제거).
+    // 미러링 중엔 미러링 앱이 화면을 켜두고, 홈 앱이라 켜두면 차 밖에서도 화면이 안 꺼지므로 관여하지 않는다.
+    val keepScreenOn: Boolean get() = false
 
     // ── 날씨 위치 모드 (gps / city) ──
     var locMode: String

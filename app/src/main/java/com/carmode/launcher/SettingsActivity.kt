@@ -39,7 +39,6 @@ class SettingsActivity : AppCompatActivity() {
 
         setupHomeApp()
         setupTheme()
-        setupKeepScreen()
         setupWidgetSide()
         setupWeatherItems()
         setupWeatherLoc()
@@ -325,14 +324,6 @@ class SettingsActivity : AppCompatActivity() {
             }
         }
         builder.show()
-    }
-
-    // ── 화면 항상 켜기 ──
-    private fun setupKeepScreen() {
-        b.switchKeepOn.isChecked = settings.keepScreenOn
-        b.switchKeepOn.setOnCheckedChangeListener { _, checked ->
-            settings.keepScreenOn = checked
-        }
     }
 
     // ── 위젯 위치 ──
